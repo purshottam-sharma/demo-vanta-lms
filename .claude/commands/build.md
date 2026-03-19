@@ -115,6 +115,22 @@ If failures → send failures back to originating agent to fix. Max 2 fix cycles
 If still failing after 2 cycles → post failure log to ClickUp, halt, require human fix.
 Save WorkOrder. `current_step: 5`.
 
+## Step 5.5 — Visual Diff Agent (feature-ui tasks only)
+**Skip this step entirely if `figma_url` is not present or task_type is not `feature-ui`.**
+
+Read `agents/visual-diff/SKILL.md`.
+
+Spawn Visual Diff Agent sub-agent:
+- Provide: `figma_png_path` (`/tmp/figma-{task_id}.png`), `task_id`, `route` (primary route from acceptance_criteria, e.g. `/dashboard`), `generated_frontend_files`
+- Instruction: read `agents/visual-diff/SKILL.md`, run Playwright screenshot helper, use Claude Vision to compare rendered output vs Figma PNG, generate fix list, route fixes to Frontend Agent, loop until PASSED or max 3 cycles
+- Returns: `VisualDiffReport { status, loops, diffs_found_total, diffs_remaining, fixes_applied }`
+
+**If status = PASSED:** proceed to Step 6, include "Visual diff: PASSED (N diffs fixed)" in Checkpoint 1 summary.
+**If status = MAX_LOOPS_REACHED:** proceed to Step 6, include remaining diffs in Checkpoint 1 summary so the human can decide.
+**If Visual Diff Agent errors (Playwright missing, server won't start):** log warning, skip, proceed to Step 6.
+
+Save WorkOrder. `current_step: 5.5`.
+
 ## Step 6 — Human Checkpoint 1
 Post to ClickUp task:
 - All generated file diffs (file path + full content)

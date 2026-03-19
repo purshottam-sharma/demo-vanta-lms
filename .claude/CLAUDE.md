@@ -35,6 +35,7 @@ No separate Anthropic API key needed. No Python AI calls. Claude Code handles ev
 | 4 | Frontend Agent | Agent tool (sub-agent) | React + shadcn/ui code gen |
 | 5 | Reflector Agent | Agent tool (sub-agent) | Backend ↔ Frontend contract check |
 | 6 | Testing Agent | Agent tool (sub-agent) | pytest + vitest + Playwright |
+| 6.5 | Visual Diff Agent | Agent tool (sub-agent) | Figma PNG vs rendered screenshot → Vision diff loop |
 | 7 | Review Agent | Agent tool (sub-agent) | Evaluator-Optimizer (score 0-100) |
 | 8 | GitHub Agent | Agent tool (sub-agent) | Branch + commit + PR |
 
