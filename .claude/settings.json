@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python agents/shared/hooks/bash_guard.py",
+            "command": "python3 agents/shared/hooks/bash_guard.py",
             "description": "Block dangerous bash commands (rm -rf, curl | bash, kill -9, etc.)"
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python agents/shared/hooks/postgres_guard.py",
+            "command": "python3 agents/shared/hooks/postgres_guard.py",
             "description": "Block destructive SQL: DROP, TRUNCATE, DELETE without WHERE, ALTER"
           }
         ]
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python agents/shared/hooks/github_guard.py",
+            "command": "python3 agents/shared/hooks/github_guard.py",
             "description": "Block push to main/develop, force push, repo/branch deletion"
           }
         ]
@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python agents/shared/hooks/audit_logger.py",
+            "command": "python3 agents/shared/hooks/audit_logger.py",
             "description": "Append every tool call as JSON line to agents/logs/audit.jsonl"
           }
         ]
