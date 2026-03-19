@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "vanta-lms"
 version = "0.1.0"
-description = "Vanta LMS — agentic learning management system"
+description = "Vanta LMS - agentic learning management system"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
@@ -17,6 +17,9 @@ dependencies = [
     "alembic>=1.14",
     "python-dotenv>=1.0",
     "httpx>=0.27",
+    "python-jose[cryptography]>=3.3",
+    "passlib[bcrypt]>=1.7",
+    "email-validator>=2.1",
 ]
 
 [dependency-groups]
