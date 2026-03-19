@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "clickup": {
+      "type": "sse",
+      "url": "https://mcp.clickup.com/sse",
+      "env": {
+        "CLICKUP_API_TOKEN": "${CLICKUP_API_TOKEN}"
+      }
+    },
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "figma": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "figma-mcp-server"],
+      "env": {
+        "FIGMA_API_TOKEN": "${FIGMA_API_TOKEN}"
+      }
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://agent_readonly:Ag3nt$Read0nly#2024!@ep-crimson-glade-ameue6qy-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"],
+      "env": {}
+    }
+  }
+}

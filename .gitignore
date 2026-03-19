@@ -1,0 +1,21 @@
+# Secrets
+.env
+
+# Agent runtime
+agents/staging/
+agents/logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.uv/
+
+# Node
+node_modules/
+dist/
+.nx/cache/
+
+# OS
+.DS_Store

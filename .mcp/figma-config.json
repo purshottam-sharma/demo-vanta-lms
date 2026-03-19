@@ -1,0 +1,6 @@
+{
+  "file_id": "YOUR_FIGMA_FILE_ID",
+  "pages": ["Design System", "Features", "Flows"],
+  "frame_search_strategy": "title_keyword_match",
+  "notes": "Set file_id to your Figma project file ID. Pages lists which pages the PM Agent will search when looking for matching frames."
+}

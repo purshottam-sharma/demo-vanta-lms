@@ -1,0 +1,6 @@
+{
+  "notes": "Maps ClickUp member email addresses to GitHub usernames. Used by GitHub Agent to assign PR reviewers.",
+  "mapping": {
+    "purshottam.j.sharma@gmail.com": "purshottam-sharma"
+  }
+}

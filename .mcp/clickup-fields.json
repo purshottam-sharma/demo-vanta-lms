@@ -1,0 +1,18 @@
+{
+  "list_id": "901614094612",
+  "fields": {
+    "task_type":                   "18f90408-63ed-4959-a3aa-814e177479f3",
+    "figma_url":                   "4a87933c-2698-4ec3-9ee0-345a9bb4fdd2",
+    "neo4j_labels":                "75e1cd3b-7a3c-4209-8143-4c9a39794e52",
+    "api_endpoints":               "190e1209-bb11-48ab-9a10-54da09d5a683",
+    "acceptance_criteria":         "7fa54a3d-6742-4732-9b34-d5132d104d61",
+    "reproduction_steps":          "bf177ba7-e406-439d-b7ca-5a86fb739e8b",
+    "root_cause_hypothesis":       "a692591e-a38b-4c78-96dd-cadb9eb6add4",
+    "affected_files":              "d9adaf42-3c99-4cad-b966-84899cf66c11",
+    "story_points":                "118d7f35-92e9-4796-8973-4b9d38fb9ef2",
+    "agent_task_approved":         "09b1a652-d44e-4a41-bb9a-5fe297396c11",
+    "agent_requirements_approved": "524ce765-0d2a-4cf7-8c76-fbe6bad58e81",
+    "agent_code_approved":         "a65f51d9-b03a-4afb-987e-f46b0505ef6c",
+    "agent_pr_approved":           "33b094c7-10b8-4dc7-a1de-f98b6abcd19b"
+  }
+}

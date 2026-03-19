@@ -1,0 +1,48 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python agents/shared/hooks/bash_guard.py",
+            "description": "Block dangerous bash commands (rm -rf, curl | bash, kill -9, etc.)"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__postgres__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python agents/shared/hooks/postgres_guard.py",
+            "description": "Block destructive SQL: DROP, TRUNCATE, DELETE without WHERE, ALTER"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__github__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python agents/shared/hooks/github_guard.py",
+            "description": "Block push to main/develop, force push, repo/branch deletion"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python agents/shared/hooks/audit_logger.py",
+            "description": "Append every tool call as JSON line to agents/logs/audit.jsonl"
+          }
+        ]
+      }
+    ]
+  }
+}
