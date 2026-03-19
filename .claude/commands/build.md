@@ -67,9 +67,9 @@ If the export fails, log a warning and continue — do not halt.
 Spawn both sub-agents **simultaneously** using the Agent tool:
 
 **Design Agent** (only if figma_url is present):
-- Provide: task title, figma_url, acceptance_criteria (UI-relevant only)
-- Instruction: read `agents/design/SKILL.md`, then fetch the Figma frame, extract UISpec JSON (components, color tokens, typography, interactions), self-reflect vs Figma + criteria
-- Returns: UISpec JSON
+- Provide: task title, figma_url, task_id, acceptance_criteria (UI-relevant only)
+- Instruction: read `agents/design/SKILL.md`, fetch Figma node JSON + download frame PNG, run Claude Vision analysis on PNG, merge JSON measurements + Vision observations into enriched UISpec, self-reflect vs criteria
+- Returns: UISpec JSON + `figma_png_path` + `vision_summary` (3-5 bullet points of non-obvious design choices)
 
 **Backend Agent** (only if api_endpoints or DB tables are present):
 - Provide: task description, affected tables/columns, api_endpoints, acceptance_criteria (backend-relevant)
@@ -82,8 +82,8 @@ Save WorkOrder after both complete. `current_step: 2`.
 Read `agents/frontend/SKILL.md`.
 
 Spawn Frontend Agent sub-agent:
-- Provide: UISpec (from Design Agent), API contract (endpoints + Pydantic models from Backend Agent), acceptance_criteria
-- Instruction: read `agents/frontend/SKILL.md` and `skills/react-shadcn.md`, generate React pages + components + React Query hooks + TypeScript types using shadcn/ui, self-reflect vs UISpec + API contract
+- Provide: UISpec JSON (from Design Agent), `figma_png_path`, `vision_summary`, API contract (endpoints + Pydantic models from Backend Agent), acceptance_criteria
+- Instruction: read `agents/frontend/SKILL.md` and `skills/react-shadcn.md`, generate React pages + components + React Query hooks + TypeScript types using shadcn/ui. Pay close attention to `vision_summary` — these are non-obvious design choices that numbers alone won't convey. Self-reflect vs UISpec + vision_summary + API contract.
 - Returns: list of GeneratedFile (agent_source="frontend")
 
 Save WorkOrder. `current_step: 3`.
