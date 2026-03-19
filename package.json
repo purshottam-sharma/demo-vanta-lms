@@ -1,0 +1,25 @@
+{
+  "name": "vanta-lms",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["apps/*", "libs/*"],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "nx serve web",
+    "build": "nx build web",
+    "test": "nx run-many --target=test",
+    "lint": "nx run-many --target=lint"
+  },
+  "devDependencies": {
+    "nx": "^20.0.0",
+    "@nx/react": "^20.0.0",
+    "@nx/vite": "^20.0.0",
+    "@nx/js": "^20.0.0",
+    "@nx/eslint": "^20.0.0",
+    "@nx/eslint-plugin": "^20.0.0",
+    "typescript": "^5.6.0",
+    "eslint": "^9.8.0"
+  }
+}
