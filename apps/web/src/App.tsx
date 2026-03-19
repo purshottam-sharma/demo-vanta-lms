@@ -11,6 +11,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
+import UserManagementPage from './pages/UserManagementPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,7 +34,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -54,6 +54,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <UserManagementPage />
               </ProtectedRoute>
             }
           />

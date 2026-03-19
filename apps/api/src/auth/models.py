@@ -53,3 +53,4 @@ class UserPublic(BaseModel):
     email: str
     full_name: str
     is_active: bool
+    role: str = "student"

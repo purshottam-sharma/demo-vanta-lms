@@ -41,7 +41,7 @@ async def get_current_user(
         ) from exc
 
     row = await db.fetchrow(
-        "SELECT id, email, full_name, is_active FROM users WHERE id = $1",
+        "SELECT id, email, full_name, is_active, role FROM users WHERE id = $1",
         uuid.UUID(user_id_str),
     )
     if row is None or not row["is_active"]:
@@ -56,4 +56,5 @@ async def get_current_user(
         email=row["email"],
         full_name=row["full_name"],
         is_active=row["is_active"],
+        role=row["role"],
     )

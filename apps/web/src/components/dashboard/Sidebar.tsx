@@ -65,7 +65,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         ].join(' ')}
         aria-label="Sidebar navigation"
       >
-        {/* Header / Logo — 72px to align with navbar */}
+        {/* Header / Logo — 72px tall to align with navbar */}
         <div className="h-[72px] flex items-center justify-between px-4 border-b border-[#e2e8f0] flex-shrink-0">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-[#fe0123]">

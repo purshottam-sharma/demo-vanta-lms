@@ -6,6 +6,7 @@ from .config import settings
 from .db import lifespan
 from .auth.router import router as auth_router
 from .users.router import router as users_router
+from .admin.router import router as admin_router
 
 app = FastAPI(
     title="Vanta LMS API",
@@ -40,5 +41,8 @@ api_router.include_router(auth_router)
 
 # Users routes mounted at /api/v1/users
 api_router.include_router(users_router)
+
+# Admin routes mounted at /api/v1/admin
+api_router.include_router(admin_router)
 
 app.include_router(api_router)
