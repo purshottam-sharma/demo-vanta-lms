@@ -19,9 +19,11 @@ Check if `agents/logs/$ARGUMENTS/workorder.json` exists.
 
 ## Pre-Flight: Health Check
 Before anything else, verify all MCP connections are live:
-1. ClickUp MCP — fetch task `$ARGUMENTS`. If this fails, halt with clear error.
+1. ClickUp MCP — fetch task `$ARGUMENTS`. If this fails, try direct REST API via curl using `CLICKUP_API_TOKEN` from `.env`. If both fail, halt with clear error.
 2. Postgres MCP — run `SELECT 1`. If this fails, halt.
-3. GitHub MCP — verify repo `purshottam-sharma/vanta-lms` is accessible. If not, halt.
+3. GitHub MCP — verify repo `purshottam-sharma/demo-vanta-lms` is accessible. If not, halt.
+
+Note: If MCP env vars are not loaded (tokens missing), load them from `.env` using `source .env` in bash and use direct REST API calls as fallback.
 
 ## Pre-Flight: Gate Check
 Read the task from ClickUp. Check `agent_task_approved` custom field.
@@ -102,16 +104,34 @@ Post to ClickUp task:
 - All generated file diffs (file path + full content)
 - Test results summary (X passed, Y failed)
 - Any Reflector violations that were fixed
-- Instruction: "Review diffs above. Check `agent_code_approved` to continue."
 
 Set task status → "in progress".
 
-Poll `agent_code_approved` with exponential backoff:
-- 0–30 min: every 5 min
-- 30 min–2 hr: every 15 min
-- 2–24 hr: every 30 min
-- After 24 hr: post timeout notice, set status → "to do", halt
+**Then use the AskUserQuestion tool with exactly these two options:**
+- Question: "Tests passed X/Y. Here are the key changes: [list files changed]. Do you approve this code?"
+- Header: "Checkpoint 1"
+- Option 1 label: "Approve" — description: "Looks good, proceed to Review Agent"
+- Option 2 label: "Request changes" — description: "Something needs to change — I'll tell you what"
 
+**If "Approve":**
+- Update `agent_code_approved` to true in ClickUp via API
+- Proceed to Step 7
+
+**If "Request changes":**
+Enter a **conversational hardening loop**:
+- Ask: "What needs to change?" and engage in open conversation — the user can describe issues, ask questions, suggest alternatives, or paste examples
+- Do NOT rush to spawn agents — first fully understand what they want through back-and-forth dialogue
+- When the user is satisfied with the direction and says something like "ok go ahead" / "make that change" / "looks right":
+  - Summarise the agreed changes
+  - Route fixes to the correct agent(s) by file:
+    - Backend files (`apps/api/`, `agents/`) → Backend Agent
+    - Frontend files (`apps/web/`, `libs/`) → Frontend Agent
+    - Both → spawn both with targeted instructions
+  - Re-run: Reflector → Testing (counts toward existing max cycle limits)
+  - Push the updated files to the existing branch (same branch, new commit)
+  - Post a comment to ClickUp summarising what changed and why
+  - Show the user the updated diffs and ask again via AskUserQuestion
+- Repeat until the user selects "Approve" — no hard cycle limit on conversation, but max 3 agent re-runs
 
 Save WorkOrder. `current_step: 6`.
 
@@ -135,9 +155,26 @@ Save WorkOrder. `current_step: 7`.
 ## Step 8 — Human Checkpoint 2
 Post to ClickUp:
 - Final review score and dimension breakdown
-- "Ready to create PR. Check `agent_pr_approved` to proceed."
 
-Poll `agent_pr_approved` with same backoff as Checkpoint 1.
+**Then use the AskUserQuestion tool with exactly these two options:**
+- Question: "Review score: X/100 (Correctness: A, Completeness: B, Quality: C, Architecture: D, DX: E). Ready to create the PR. Do you approve?"
+- Header: "Checkpoint 2"
+- Option 1 label: "Approve" — description: "Create the PR now"
+- Option 2 label: "Request changes" — description: "Something needs to change before the PR"
+
+**If "Approve":**
+- Update `agent_pr_approved` to true in ClickUp via API
+- Proceed to Step 9
+
+**If "Request changes":**
+Enter the same **conversational hardening loop** as Checkpoint 1:
+- Engage in open dialogue to understand what needs to change
+- When user confirms direction, route fixes to correct agent(s), re-run Review Agent
+- Push updated files to the existing branch as a new commit
+- Post ClickUp comment summarising what changed and why
+- Show updated score and ask again via AskUserQuestion
+- Max 3 agent re-runs (no hard limit on conversation turns)
+
 Save WorkOrder. `current_step: 8`.
 
 ## Step 9 — GitHub Agent
@@ -156,6 +193,48 @@ Spawn GitHub Agent sub-agent:
 Post PR URL to ClickUp task as a link + comment.
 Set ClickUp status → "in review".
 Save WorkOrder with `current_step: 9`, `status: done`, `pr_url`.
+
+**Then pull the branch locally so the user can test immediately:**
+```bash
+git fetch origin
+git checkout feature/$ARGUMENTS-{slug}
+```
+
+Tell the user: "PR created: {url}. Branch checked out locally — you can now run `uv sync` / `npm install` / `nx serve` to test."
+
+## Step 10 — PR Review Agent
+Spawn a PR Review Agent sub-agent immediately after the PR is created:
+
+- Provide: PR URL, all generated files, acceptance_criteria, task_type, review score + violations from Step 7
+- Instruction:
+  1. Re-read all generated files with fresh eyes as a senior engineer doing a real code review
+  2. Check for issues NOT already caught by the Review Agent rubric — e.g. security issues, missing edge cases, confusing naming, brittle patterns, anything that would block a real PR approval
+  3. For each issue found: post an inline GitHub PR comment on the specific file + line using the GitHub MCP (`create_pull_request_review` with `COMMENT` event)
+  4. If no blocking issues: approve the PR using GitHub MCP (`create_pull_request_review` with `APPROVE` event) with a summary comment
+  5. If blocking issues exist: request changes using GitHub MCP (`create_pull_request_review` with `REQUEST_CHANGES` event) listing each issue
+
+- After GitHub review is posted:
+  - Post a ClickUp comment summarising the review outcome:
+    - If approved: "PR Review Agent approved the PR. X inline comments left. **Merge is manual — please do a final review and merge when ready.**"
+    - If changes requested: "PR Review Agent requested changes. Issues: [list]. Please review inline comments on the PR before merging."
+  - Update ClickUp status → keep "in review" in both cases (merging is always manual)
+  - **Never merge the PR** — the agent only reviews and comments, the human always merges
+
+- Then notify the user directly in the conversation:
+  - If approved: "PR Review Agent approved ✅. [X] inline comments posted. Do a final read on GitHub and merge when you're happy: {pr_url}"
+  - If changes requested: "PR Review Agent flagged issues ⚠️. Inline comments posted on GitHub. Review them at {pr_url} — you decide whether to fix or merge as-is."
+
+Save WorkOrder with `current_step: 10`, `pr_review: "approved"|"changes_requested"`.
+
+## On PR Merge (automated — GitHub Actions)
+The workflow `.github/workflows/sync-clickup-on-merge.yml` fires automatically when any PR targeting `main` is merged. No agent action required.
+
+It:
+1. Extracts the task ID from the branch name (`feature/{task_id}-{slug}`) or PR title (`[{task_id}]`)
+2. Posts a ClickUp comment: PR URL, merged by, timestamp
+3. Sets ClickUp task status → `complete`
+
+**Requires**: `CLICKUP_API_TOKEN` added as a GitHub repository secret (Settings → Secrets → Actions).
 
 ## Error Handling
 - Any sub-agent returns an error → post to ClickUp, save WorkOrder with error, halt

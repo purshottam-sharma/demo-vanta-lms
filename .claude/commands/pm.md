@@ -62,12 +62,12 @@ If developer provides edits → revise proposal and show it again (Step C2)
 If developer says `n` → cancel, do nothing
 
 ### Step C4 — Create the Task in ClickUp
-Once confirmed, create the task in ClickUp list `901614094612` with:
-- name: corrected title
-- description: proposed description
-- assignees: [284562467]
-- status: "to do"
-
+Once confirmed, create the task. Try ClickUp MCP first; if unavailable, use curl:
+```bash
+source .env && curl -s -X POST "https://api.clickup.com/api/v2/list/901614094612/task" \
+  -H "Authorization: $CLICKUP_API_TOKEN" -H "Content-Type: application/json" \
+  -d '{"name": "...", "description": "...", "assignees": [284562467], "status": "to do"}'
+```
 Get the new task ID from the response, then continue to **GROOM MODE** with that ID.
 
 ---
@@ -75,7 +75,11 @@ Get the new task ID from the response, then continue to **GROOM MODE** with that
 ## GROOM MODE — Fill All Fields
 
 ### Step G1 — Read the Task
-Use ClickUp MCP to fetch the full task. Read: title, description, comments, any existing custom field values.
+Fetch the full task from ClickUp. Try ClickUp MCP first; if it fails (OAuth token error), fall back to direct REST API:
+```bash
+source .env && curl -s "https://api.clickup.com/api/v2/task/{task_id}?custom_fields=true" -H "Authorization: $CLICKUP_API_TOKEN"
+```
+Read: title, description, comments, any existing custom field values.
 Also read `.mcp/clickup-fields.json` for field IDs.
 
 ### Step G2 — Classify Task Type
@@ -134,7 +138,22 @@ Check each item:
 If any item fails → rewrite that section, re-check. Repeat until all pass.
 
 ### Step G6 — Update ClickUp
-Using field IDs from `.mcp/clickup-fields.json`, update all custom fields via ClickUp MCP.
+Using field IDs from `.mcp/clickup-fields.json`, update all custom fields. Try ClickUp MCP first; if unavailable, use curl:
+```bash
+source .env
+# Update a custom field:
+curl -s -X POST "https://api.clickup.com/api/v2/task/{task_id}/field/{field_id}" \
+  -H "Authorization: $CLICKUP_API_TOKEN" -H "Content-Type: application/json" \
+  -d '{"value": "..."}'
+# Post a comment:
+curl -s -X POST "https://api.clickup.com/api/v2/task/{task_id}/comment" \
+  -H "Authorization: $CLICKUP_API_TOKEN" -H "Content-Type: application/json" \
+  -d '{"comment_text": "..."}'
+# Set status:
+curl -s -X PUT "https://api.clickup.com/api/v2/task/{task_id}" \
+  -H "Authorization: $CLICKUP_API_TOKEN" -H "Content-Type: application/json" \
+  -d '{"status": "ready"}'
+```
 If story_points >= 5, create subtasks in ClickUp.
 
 ### Step G7 — Post Summary + Verdict
