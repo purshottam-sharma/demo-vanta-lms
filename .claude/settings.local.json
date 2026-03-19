@@ -20,7 +20,12 @@
       "Bash(git add:*)",
       "Bash(git check-ignore:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(head -5 grep -n \"passlib\\\\|import bcrypt\" /home/sol/demo-vanta-lms/apps/api/src/auth/security.py)",
+      "Bash(curl -s -X POST \"https://api.clickup.com/api/v2/task/86d2bzwt3/comment\" -H \"Authorization: $CLICKUP_API_TOKEN\" -H \"Content-Type: application/json\" -d '{\"\"\"\"comment_text\"\"\"\": \"\"\"\"🤖 PR created by GitHub Agent:\\\\nhttps://github.com/purshottam-sharma/demo-vanta-lms/pull/3\\\\n\\\\nBranch: feature/86d2bzwt3-auth-pages\\\\nCommit: f6d110\\\\n25 files committed \\(12 backend + 13 frontend\\)\"\"\"\"}')",
+      "Bash(curl -s -X PUT \"https://api.clickup.com/api/v2/task/86d2bzwt3\" -H \"Authorization: $CLICKUP_API_TOKEN\" -H \"Content-Type: application/json\" -d '{\"\"\"\"status\"\"\"\": \"\"\"\"in review\"\"\"\"}')",
+      "Bash(curl -s -X POST \"https://api.clickup.com/api/v2/task/86d2bzwt3/comment\" -H \"Authorization: $CLICKUP_API_TOKEN\" -H \"Content-Type: application/json\" -d '{\"\"\"\"comment_text\"\"\"\": \"\"\"\"🤖 PR Review Agent — CHANGES REQUESTED\\\\n\\\\nhttps://github.com/purshottam-sharma/demo-vanta-lms/pull/3\\\\n\\\\n4 blocking issues flagged \\(inline comments on GitHub\\):\\\\n• B1: SSL CERT_NONE applied unconditionally in all envs \\(db.py:27\\)\\\\n• B2: No rate limiting on /login or /forgot-password \\(brute force risk\\)\\\\n• B3: GET /auth/me missing from router — page reload bounces to /login\\\\n• B4: Apple OAuth uses GET but Apple sends form_post \\(POST\\) — non-functional\\\\n\\\\n7 non-blocking issues also flagged. Review inline comments on the PR before merging.\\\\n\\\\nMerge is manual — please review and merge when ready.\"\"\"\"}')",
+      "Bash(curl -s \"https://api.figma.com/v1/files/8WV7cXkdYM65uT2vlfTQs5?depth=1\" -H \"X-Figma-Token: $FIGMA_API_TOKEN\")"
     ]
   }
 }

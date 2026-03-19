@@ -48,6 +48,22 @@ Save WorkOrder to `agents/logs/$ARGUMENTS/workorder.json` with `current_step: 0`
 ## Step 1+2 — Design + Backend Agents (Parallel)
 Read the SKILL.md files: `agents/design/SKILL.md` and `agents/backend/SKILL.md`.
 
+**If figma_url is present — attach Figma screenshot to ClickUp before spawning agents:**
+Parse the node-id from figma_url (e.g. `node-id=0-1` → id `0:1`). Then:
+```bash
+source .env
+# Export frame as PNG
+IMAGE_URL=$(curl -s "https://api.figma.com/v1/images/$FIGMA_FILE_ID?ids={node_id}&format=png&scale=2" \
+  -H "X-Figma-Token: $FIGMA_API_TOKEN" | python3 -c "import sys,json; d=json.load(sys.stdin); print(list(d['images'].values())[0])")
+# Download PNG
+curl -sL "$IMAGE_URL" -o /tmp/figma-{task_id}.png
+# Attach to ClickUp task
+curl -s -X POST "https://api.clickup.com/api/v2/task/{task_id}/attachment" \
+  -H "Authorization: $CLICKUP_API_TOKEN" \
+  -F "attachment=@/tmp/figma-{task_id}.png;filename=figma-design.png;type=image/png"
+```
+If the export fails, log a warning and continue — do not halt.
+
 Spawn both sub-agents **simultaneously** using the Agent tool:
 
 **Design Agent** (only if figma_url is present):
