@@ -1,19 +1,23 @@
 # Visual Diff Agent
 
 ## Role
-Compare the rendered frontend against the Figma design frame using Claude Vision.
-Identify pixel-level discrepancies and generate targeted fix instructions for the Frontend Agent.
-Loop until the rendered output matches Figma within acceptable tolerance.
+Validate that the rendered frontend matches the Figma design by comparing two images
+with Claude Vision. Uses the Design Agent's `vision_summary` as a priority checklist
+so the diff is targeted — checking known high-risk choices first, not scanning from zero.
+
+This is a **validator**, not a discoverer. The Design Agent already captured intent.
+The Visual Diff Agent verifies the Frontend Agent honoured it.
 
 ## When to Run
 Only for `feature-ui` tasks where `figma_url` is present.
 Runs as **Step 5.5** — after Testing Agent, before Checkpoint 1.
 
 ## Inputs
-- `figma_png_path` — path to Figma frame PNG (downloaded by Orchestrator in Step 1+2, e.g. `/tmp/figma-{task_id}.png`)
-- `task_id` — task identifier (for file paths and staging)
-- `route` — frontend route to screenshot (e.g. `/dashboard`, `/login`)
-- `generated_frontend_files` — list of frontend files changed (to scope fix instructions)
+- `figma_png_path` — Figma frame PNG downloaded by Design Agent (`/tmp/figma-{task_id}.png`)
+- `vision_summary` — bullet list of non-obvious design choices from Design Agent
+- `task_id` — for file paths
+- `route` — frontend route to screenshot (e.g. `/dashboard`)
+- `generated_frontend_files` — list of frontend files (to scope fix instructions)
 - `max_loops` — max correction cycles (default: 3)
 
 ---
@@ -27,50 +31,70 @@ python3 agents/shared/playwright_screenshot.py {route} /tmp/rendered-{task_id}.p
 
 This script:
 1. Checks if Vite dev server is running on port 5173; starts it if not
-2. Injects mock auth into `sessionStorage` so the protected route renders without a real login
-3. Mocks `GET /api/v1/users/me` to return demo user data (no backend required)
-4. Waits for `networkidle` + 1s font/image buffer
-5. Screenshots at 1440×900 viewport and saves to `/tmp/rendered-{task_id}.png`
+2. Injects mock auth into `sessionStorage` — protected route renders without a real login
+3. Mocks `GET /api/v1/users/me` to return demo user data — no backend required
+4. Waits for `networkidle` + 1.5s buffer for web fonts and images
+5. Screenshots at 1440×900 and saves to `/tmp/rendered-{task_id}.png`
 
-If the screenshot fails (server won't start, Playwright not installed), log a warning and skip visual diff — do not halt the pipeline.
+If screenshot fails, log a warning and skip — do not halt the pipeline.
 
 ---
 
-## Step 2 — Visual Comparison with Claude Vision
+## Step 2 — Targeted Vision Comparison
 
-Read both images as binary and pass them to a Vision sub-agent with this prompt:
+Pass **both images** + the `vision_summary` from the Design Agent to Claude Vision:
 
 ```
-You are a pixel-perfectness reviewer for a UI build pipeline.
+You are a pixel-perfectness reviewer comparing a Figma design against a rendered page.
 
-IMAGE 1 (Figma design target): [attach figma_png_path]
-IMAGE 2 (Rendered output): [attach rendered_png_path]
+IMAGE 1 — Figma design target: [figma_png_path]
+IMAGE 2 — Rendered React output: [rendered_png_path]
 
-Compare them carefully. For every visual difference, output a structured JSON item:
+The Design Agent already analysed this design and flagged these non-obvious
+choices that developers commonly get wrong. Check these FIRST:
+
+{vision_summary}
+  Example:
+  • "Quick action cards are horizontal pills (icon left, label right) — not vertical stacks"
+  • "Notification button is a 48×48 square pill with bg #f8fafc — not a bare icon"
+  • "Profile area is a full-width pill container with chevron — not loose avatar + text"
+  • "Sidebar footer is a full-width button with Settings icon — not plain text"
+
+For each item in vision_summary: does the rendered output match? Report pass/fail.
+
+Then scan for any remaining differences not covered by vision_summary:
+1. Layout structure — sections present in correct order?
+2. Dimensions — height, width, padding, gap of each major component
+3. Typography — font size, weight, color
+4. Colors — background, border, text (exact hex)
+5. Border radius, shadows, icon sizes
+6. Spacing between sections
+
+For every difference found, output a structured JSON item:
 {
   "component": "Navbar",
   "property": "height",
   "figma_value": "72px",
   "rendered_value": "56px",
   "file": "apps/web/src/components/dashboard/Navbar.tsx",
-  "fix": "Change h-14 to h-[72px]"
+  "fix": "Change h-14 to h-[72px]",
+  "source": "vision_summary" | "scan"
 }
 
-Examine these dimensions in order:
-1. Layout structure — are all sections/rows present in the correct order?
-2. Dimensions — height, width, padding, gap of each major component
-3. Typography — font size, weight, color for headings, labels, values
-4. Colors — background, border, text color tokens
-5. Component details — icon sizes, border radius, shadow
-6. Spacing — margin and padding between sections
-
 Rules:
-- Only report differences that require a code change to fix
-- Be specific: name the Tailwind class to change and what to change it to
-- Ignore dynamic data differences (different text content is fine)
-- Return PASSED if there are no significant layout/styling differences
+- Only report differences that require a code change
+- Be specific: name the exact Tailwind class and what to change it to
+- Ignore text content differences (dynamic data is fine)
+- Return PASSED if all vision_summary items pass and no significant scan differences
 - Return NEEDS_FIXES with the full structured list otherwise
 ```
+
+The `source` field distinguishes:
+- `"vision_summary"` — a known high-risk choice the Frontend Agent missed
+- `"scan"` — a general layout/style difference discovered by scanning
+
+This matters for routing fixes: `vision_summary` failures go back to the Frontend Agent
+with the original intent context; `scan` failures are targeted CSS patches.
 
 ---
 
@@ -80,21 +104,31 @@ Rules:
 Return `VisualDiffReport { status: "PASSED", loops: N, diffs_remaining: 0 }`
 
 ### If NEEDS_FIXES:
-- Group fixes by file
-- Pass to Frontend Agent:
-  ```
-  Apply these pixel-perfect fixes from visual comparison with Figma.
-  Do NOT change any logic, only CSS/Tailwind class values:
+Group fixes by file and by source, then route them:
 
-  [structured fix list grouped by file]
-  ```
-- Frontend Agent applies changes to the actual files on disk
-- Re-run Steps 1–2
-- Repeat up to `max_loops` times
+**vision_summary failures** — Frontend Agent needs the original intent reinstated:
+```
+These design intent items from the Design Agent were not implemented correctly.
+Re-read the vision_summary carefully and fix each one:
 
-### If max loops reached with remaining diffs:
+[items with source: "vision_summary"]
+
+Context from Design Agent:
+{vision_summary}
+```
+
+**scan failures** — targeted CSS patches only:
+```
+Apply these pixel-perfect CSS fixes. Do NOT change any logic:
+
+[items with source: "scan", grouped by file]
+```
+
+After fixes are applied, re-run Steps 1–2. Repeat up to `max_loops` times.
+
+### If max loops reached:
 Return `VisualDiffReport { status: "MAX_LOOPS_REACHED", loops: N, diffs_remaining: [...] }`
-Include remaining diffs in Checkpoint 1 summary so the human can decide.
+Include remaining diffs in Checkpoint 1 summary for human review.
 
 ---
 
@@ -102,17 +136,22 @@ Include remaining diffs in Checkpoint 1 summary so the human can decide.
 ```json
 {
   "status": "PASSED" | "NEEDS_FIXES" | "MAX_LOOPS_REACHED",
-  "loops": 2,
-  "diffs_found_total": 8,
+  "loops": 1,
+  "diffs_found_total": 4,
   "diffs_remaining": 0,
+  "vision_summary_checks": {
+    "passed": 3,
+    "failed": 1
+  },
   "figma_png": "/tmp/figma-{task_id}.png",
   "rendered_png": "/tmp/rendered-{task_id}.png",
   "fixes_applied": [
     {
-      "component": "Navbar",
-      "property": "height",
-      "fix": "h-14 → h-[72px]",
-      "file": "apps/web/src/components/dashboard/Navbar.tsx"
+      "component": "QuickActionCard",
+      "property": "layout direction",
+      "fix": "flex-col → flex-row",
+      "file": "apps/web/src/components/dashboard/DashboardBody.tsx",
+      "source": "vision_summary"
     }
   ]
 }
@@ -120,23 +159,39 @@ Include remaining diffs in Checkpoint 1 summary so the human can decide.
 
 ---
 
+## Why Two Calls, Not One
+
+The Design Agent's Vision call and this call are different tasks:
+
+| | Design Agent Vision | Visual Diff Vision |
+|---|---|---|
+| Images | 1 (Figma PNG only) | 2 (Figma PNG + rendered screenshot) |
+| Task | "Describe design intent" | "Find differences between these two" |
+| Output | UISpec + vision_summary | Structured diff list with fix instructions |
+| Timing | Once, before code is written | Per loop, after code is rendered |
+
+The `vision_summary` flows from call #1 into call #2 as a priority checklist —
+so call #2 is not starting from zero, it's verifying a known list of risks first.
+
+---
+
 ## Self-Reflection Checklist
-Before returning PASSED, verify each of these visually:
-- [ ] Overall layout structure matches (sidebar left, content right, navbar top)
-- [ ] Sidebar width and header height match
-- [ ] Navbar height and internal element layout match
-- [ ] Card rows: correct number of cards per row, correct layout direction
-- [ ] Typography: value font size/weight, label size, subtitle size
-- [ ] Color tokens: no approximations — hex values must match exactly
+Before returning PASSED:
+- [ ] Every item in `vision_summary` was explicitly checked and passed
+- [ ] Overall layout structure matches (sidebar / navbar / content zones)
+- [ ] Sidebar: width, header height, nav item height, footer type (button not text)
+- [ ] Navbar: height, search bar dimensions, notification pill, profile pill
+- [ ] Card rows: correct count per row, correct layout direction per card
+- [ ] Typography: value size/weight, label size, matches Figma JSON
+- [ ] All color tokens are exact hex — no approximations
+- [ ] Border radii consistent (rounded-lg ≠ rounded-xl)
 - [ ] Spacing between sections matches
-- [ ] Quick action card orientation matches (horizontal vs vertical)
-- [ ] Icon sizes match
-- [ ] Border radii match (rounded-lg vs rounded-xl etc.)
 
 ---
 
 ## Error Handling
 - Playwright not installed → `pip install playwright && playwright install chromium`, retry once
-- Dev server fails to start after 30s → skip visual diff, add warning to Checkpoint 1 summary
-- Vision sub-agent returns ambiguous result → treat as NEEDS_FIXES and do one fix cycle
-- Figma PNG missing → skip visual diff entirely, log warning
+- Dev server fails to start after 40s → skip visual diff, add warning to Checkpoint 1 summary
+- `figma_png_path` missing → skip visual diff, log warning
+- `vision_summary` missing → run without it (fall back to full scan only)
+- Vision returns ambiguous result → treat as NEEDS_FIXES, do one fix cycle
