@@ -1,0 +1,65 @@
+name: Sync ClickUp on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  sync-clickup:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract ClickUp Task ID
+        id: extract
+        run: |
+          # Try branch name first: feature/86d2byvzk-some-slug or fix/86d2byvzk-some-slug
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          TASK_ID=$(echo "$BRANCH" | grep -oP '(?<=feature/|fix/)[a-z0-9]+(?=-)' || true)
+
+          # Fallback: parse from PR title [task_id]
+          if [ -z "$TASK_ID" ]; then
+            TITLE="${{ github.event.pull_request.title }}"
+            TASK_ID=$(echo "$TITLE" | grep -oP '(?<=\[)[a-z0-9]+(?=\])' || true)
+          fi
+
+          if [ -z "$TASK_ID" ]; then
+            echo "No ClickUp task ID found in branch name or PR title — skipping."
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
+            echo "Extracted task ID: $TASK_ID"
+          fi
+
+      - name: Post merge comment to ClickUp
+        if: steps.extract.outputs.found == 'true'
+        run: |
+          TASK_ID="${{ steps.extract.outputs.task_id }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          MERGED_BY="${{ github.event.pull_request.merged_by.login }}"
+          MERGED_AT="${{ github.event.pull_request.merged_at }}"
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+
+          curl -s -X POST \
+            "https://api.clickup.com/api/v2/task/${TASK_ID}/comment" \
+            -H "Authorization: ${{ secrets.CLICKUP_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"comment_text\": \"## PR Merged ✅\\n\\n**PR**: ${PR_URL}\\n**Title**: ${PR_TITLE}\\n**Merged by**: ${MERGED_BY}\\n**Merged at**: ${MERGED_AT}\\n**Into**: ${BASE_BRANCH}\\n\\nTask is complete.\"
+            }"
+
+      - name: Update ClickUp task status to complete
+        if: steps.extract.outputs.found == 'true'
+        run: |
+          TASK_ID="${{ steps.extract.outputs.task_id }}"
+
+          curl -s -X PUT \
+            "https://api.clickup.com/api/v2/task/${TASK_ID}" \
+            -H "Authorization: ${{ secrets.CLICKUP_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"status": "complete"}'
+
+          echo "ClickUp task ${TASK_ID} marked as complete."
