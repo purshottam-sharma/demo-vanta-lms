@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(python3 agents/shared/hooks/*)",
+      "Bash(source .env:*)",
+      "Bash(source /home/sol/demo-vanta-lms/.env:*)",
+      "Bash(git *:*)",
+      "Bash(curl *:*)",
+      "Bash(npm *:*)",
+      "Bash(npx *:*)",
+      "Bash(uv *:*)",
+      "Bash(sh:*)",
+      "Bash(find *:*)",
+      "Bash(mkdir *:*)",
+      "Bash(rm *:*)",
+      "mcp__claude_ai_ClickUp__*",
+      "mcp__github__*",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
