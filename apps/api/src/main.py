@@ -1,11 +1,15 @@
+"""Vanta LMS FastAPI application entry point."""
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
+from .db import lifespan
+from .auth.router import router as auth_router
 
 app = FastAPI(
     title="Vanta LMS API",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -30,8 +34,7 @@ async def api_v1_root() -> dict:
     return {"message": "Vanta LMS API v1"}
 
 
-# Additional routers will be mounted here as features are added
-# Example: from .routers import courses
-#          api_router.include_router(courses.router)
+# Auth routes mounted at /api/v1/auth
+api_router.include_router(auth_router)
 
 app.include_router(api_router)
