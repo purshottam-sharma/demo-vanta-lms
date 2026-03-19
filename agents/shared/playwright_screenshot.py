@@ -20,7 +20,8 @@ import os
 import json
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-DEV_PORT = 5173
+# Vite can start on 3000, 3001, 3002, etc. if a port is occupied.
+DEV_PORT_CANDIDATES = [3000, 3001, 3002, 3003, 5173]
 MOCK_USER = json.dumps({
     "id": "visual-diff-user",
     "email": "demo@vanta.lms",
@@ -33,6 +34,22 @@ def is_port_open(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(1)
         return s.connect_ex(("localhost", port)) == 0
+
+
+def find_vite_port() -> int | None:
+    """Find the port where the Vite dev server is serving HTML."""
+    import urllib.request
+    for port in DEV_PORT_CANDIDATES:
+        if not is_port_open(port):
+            continue
+        try:
+            with urllib.request.urlopen(f"http://localhost:{port}/", timeout=2) as resp:
+                content = resp.read(500).decode("utf-8", errors="ignore")
+                if "vite" in content.lower() or "<!doctype html" in content.lower():
+                    return port
+        except Exception:
+            continue
+    return None
 
 
 def wait_for_port(port: int, timeout: int = 40) -> bool:
@@ -58,22 +75,26 @@ def screenshot(
     server_proc = None
     started_server = False
 
-    if not is_port_open(DEV_PORT):
-        print(f"Dev server not running on :{DEV_PORT} — starting...", flush=True)
+    dev_port = find_vite_port()
+    if dev_port is None:
+        print("Dev server not detected — starting...", flush=True)
         server_proc = subprocess.Popen(
             ["npx", "nx", "serve", "web"],
             cwd=PROJECT_ROOT,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        if not wait_for_port(DEV_PORT, timeout=40):
+        for _ in range(40):
+            time.sleep(1)
+            dev_port = find_vite_port()
+            if dev_port:
+                break
+        if not dev_port:
             server_proc.terminate()
-            raise RuntimeError(f"Dev server did not become ready on :{DEV_PORT} within 40s")
+            raise RuntimeError("Dev server did not become ready within 40s")
         time.sleep(2)  # HMR warm-up buffer
         started_server = True
-        print(f"Dev server ready on :{DEV_PORT}", flush=True)
-    else:
-        print(f"Dev server already running on :{DEV_PORT}", flush=True)
+    print(f"Dev server on :{dev_port}", flush=True)
 
     try:
         with sync_playwright() as p:
@@ -101,10 +122,10 @@ def screenshot(
                 ),
             )
 
-            url = f"http://localhost:{DEV_PORT}{route}"
+            url = f"http://localhost:{dev_port}{route}"
             print(f"Navigating to {url} ...", flush=True)
             page.goto(url, wait_until="networkidle", timeout=30_000)
-            page.wait_for_timeout(1500)  # Extra buffer for web fonts / images
+            page.wait_for_timeout(2000)  # Extra buffer for web fonts / CSS injection
 
             os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
             page.screenshot(path=output_path, full_page=False)
