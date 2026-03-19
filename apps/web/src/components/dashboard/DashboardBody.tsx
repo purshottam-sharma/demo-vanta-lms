@@ -1,42 +1,49 @@
 import {
-  BookOpen,
-  Calendar,
-  Users,
-  ChartBar,
-  AlertTriangle,
-  Zap,
-  ChevronRight,
+  UserPlus,
   Building2,
+  ShieldCheck,
+  Download,
+  Building,
+  GraduationCap,
+  Users,
+  BookOpen,
+  ChevronRight,
+  TrendingUp,
+  Brain,
+  Activity,
+  AlertTriangle,
+  ShieldAlert,
+  ArrowUpDown,
 } from 'lucide-react';
-import DashboardCard from './DashboardCard';
 
-// ─── Hero Section ─────────────────────────────────────────────────────────────
-function HeroSection() {
-  const shortcuts = [
-    { label: 'Add Student', icon: Users, color: 'bg-[#0ba5ec]' },
-    { label: 'Schedule Exam', icon: Calendar, color: 'bg-[#9b8afb]' },
-    { label: 'View Analytics', icon: ChartBar, color: 'bg-[#2fc475]' },
-    { label: 'Run Risk Scan', icon: Zap, color: 'bg-[#a38654]' },
+// ─── Quick Actions Section ─────────────────────────────────────────────────────
+function QuickActionsSection() {
+  const actions = [
+    { label: 'Add User', icon: UserPlus, iconBg: '#eff6ff', iconColor: '#3b82f6' },
+    { label: 'New Institution', icon: Building2, iconBg: '#fffbeb', iconColor: '#f59e0b' },
+    { label: 'Manage Role', icon: ShieldCheck, iconBg: '#f0fdf4', iconColor: '#22c55e' },
+    { label: 'Export Data', icon: Download, iconBg: '#faf5ff', iconColor: '#a855f7' },
   ];
 
   return (
-    <div className="rounded-xl border border-[#e2e8f0] bg-[#f9f8f5] p-6">
-      <h2 className="text-lg font-bold text-[#202939]">Good morning</h2>
-      <p className="text-sm text-[#697586] mt-1 mb-5">
-        Here is a quick overview of what needs your attention today.
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-        {shortcuts.map(({ label, icon: Icon, color }) => (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-base font-semibold text-[#202939]">Quick Actions</h2>
+        <p className="text-[13px] text-[#697586]">Frequently used administrative functions</p>
+      </div>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        {actions.map(({ label, icon: Icon, iconBg, iconColor }) => (
           <button
             key={label}
-            className="flex flex-row items-center gap-3 h-14 px-5 rounded-xl bg-[#f9f8f5] border border-[#e2e8f0] hover:border-[#a38654] hover:shadow-sm transition-all cursor-pointer group"
+            className="flex flex-row items-center gap-3 h-[72px] px-4 rounded-[10px] bg-white border border-[#e3e8ef] hover:border-[#a38654] hover:shadow-sm transition-all cursor-pointer"
           >
-            <div className={['w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0', color].join(' ')}>
-              <Icon className="h-4 w-4 text-white" />
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: iconBg }}
+            >
+              <Icon className="h-5 w-5 flex-shrink-0" style={{ color: iconColor }} />
             </div>
-            <span className="text-sm font-medium text-[#202939] group-hover:text-[#a38654] transition-colors text-left">
-              {label}
-            </span>
+            <span className="text-[14px] font-medium text-[#202939] text-left">{label}</span>
           </button>
         ))}
       </div>
@@ -44,221 +51,363 @@ function HeroSection() {
   );
 }
 
-// ─── Row 1: 4 Stat Cards ──────────────────────────────────────────────────────
+// ─── Stat Cards Row ────────────────────────────────────────────────────────────
 function StatCardsRow() {
   const stats = [
-    { title: 'Total Depts', value: '45', subtitle: 'Active departments', trend: { direction: 'up' as const, label: '2 added this term' } },
-    { title: 'Teachers', value: '40', subtitle: 'On faculty', trend: { direction: 'up' as const, label: '6 new this month' } },
-    { title: 'Students Enrolled', value: '143,445', subtitle: 'Across all grades', trend: { direction: 'neutral' as const, label: 'Stable' } },
-    { title: 'Total Subjects', value: '32', subtitle: 'Active courses', trend: { direction: 'up' as const, label: '3 added' } },
+    {
+      label: 'Total Departments',
+      value: '45',
+      trend: '+38% vs last month',
+      icon: Building,
+      iconBg: '#fffbeb',
+      iconColor: '#f59e0b',
+    },
+    {
+      label: 'Teachers',
+      value: '40',
+      trend: '+56% vs last month',
+      icon: GraduationCap,
+      iconBg: '#eff6ff',
+      iconColor: '#3b82f6',
+    },
+    {
+      label: 'Students Enrolled',
+      value: '143,445',
+      trend: '+85% vs last month',
+      icon: Users,
+      iconBg: '#f0fdf4',
+      iconColor: '#22c55e',
+    },
+    {
+      label: 'Total Subjects',
+      value: '32',
+      trend: '+44% vs last month',
+      icon: BookOpen,
+      iconBg: '#faf5ff',
+      iconColor: '#a855f7',
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      {stats.map((s) => (
-        <DashboardCard
-          key={s.title}
-          title={s.title}
-          value={s.value}
-          subtitle={s.subtitle}
-          trend={s.trend}
-        />
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      {stats.map(({ label, value, trend, icon: Icon, iconBg, iconColor }) => (
+        <div
+          key={label}
+          className="h-[100px] p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-1"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: iconBg }}
+              >
+                <Icon className="h-4 w-4" style={{ color: iconColor }} />
+              </div>
+              <span className="text-[13px] text-[#697586]">{label}</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-[#697586] flex-shrink-0" />
+          </div>
+          <p className="text-[28px] leading-none font-bold text-[#202939]">{value}</p>
+          <div className="flex items-center gap-1">
+            <TrendingUp className="h-3 w-3 text-[#2fc475]" />
+            <span className="text-[12px] text-[#2fc475]">{trend}</span>
+          </div>
+        </div>
       ))}
     </div>
   );
 }
 
-// ─── Row 2: School Health Index + AI Alerts ───────────────────────────────────
-function HealthAndAlertsRow() {
-  const alerts = [
-    { label: 'Attendance below 70% — Grade 9B', color: 'bg-[#e37a72]' },
-    { label: '3 students missed 5+ assessments', color: 'bg-[#a38654]' },
-    { label: 'Policy violation reported — Block C', color: 'bg-[#9b8afb]' },
+// ─── Health + Insights Row (3fr : 2fr) ────────────────────────────────────────
+function HealthAndInsightsRow() {
+  const metrics = [
+    { label: 'Attendance', value: '88%', dotColor: '#2fc475' },
+    { label: 'Academic consistency', value: '7%', dotColor: '#e37a72' },
+    { label: 'Teacher workload balance', value: '75%', dotColor: '#2fc475' },
+    { label: 'Policy compliance', value: '92%', dotColor: '#2fc475' },
   ];
 
+  const insights = [
+    '3 classes at academic risk',
+    '1 teacher grading anomaly detected',
+    'Attendance drop linked to timetable change',
+  ];
+
+  // Segmented progress bar: 20 small pill segments
+  const totalSegments = 20;
+  const filledSegments = Math.round((82 / 100) * totalSegments);
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid gap-3" style={{ gridTemplateColumns: '3fr 2fr' }}>
       {/* School Health Index */}
-      <DashboardCard title="School Health Index" className="min-h-[160px]">
-        <div className="flex items-end gap-4 mt-1">
-          <div className="relative w-20 h-20 flex-shrink-0">
-            <svg viewBox="0 0 36 36" className="w-20 h-20 -rotate-90" aria-hidden="true">
-              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e2e8f0" strokeWidth="3" />
-              <circle
-                cx="18" cy="18" r="15.9" fill="none"
-                stroke="#2fc475" strokeWidth="3"
-                strokeDasharray="78 100"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-sm font-bold text-[#202939]">78%</span>
+      <div className="p-5 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#f0fdf4] flex items-center justify-center">
+              <ShieldAlert className="h-4 w-4 text-[#22c55e]" />
             </div>
+            <span className="text-[15px] font-semibold text-[#202939]">School Health Index</span>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#2fc475] flex-shrink-0" />
-              <span className="text-[#697586]">Compliance</span>
-              <span className="ml-auto font-semibold text-[#202939]">82%</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0ba5ec] flex-shrink-0" />
-              <span className="text-[#697586]">Engagement</span>
-              <span className="ml-auto font-semibold text-[#202939]">75%</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#9b8afb] flex-shrink-0" />
-              <span className="text-[#697586]">Performance</span>
-              <span className="ml-auto font-semibold text-[#202939]">77%</span>
-            </div>
+          <ChevronRight className="h-4 w-4 text-[#697586]" />
+        </div>
+
+        <div className="flex items-baseline gap-2">
+          <span className="text-[32px] font-bold leading-none text-[#202939]">82</span>
+          <span className="text-base text-[#697586]">/ 100</span>
+          <div className="flex items-center gap-1 ml-1">
+            <TrendingUp className="h-3.5 w-3.5 text-[#2fc475]" />
+            <span className="text-[13px] text-[#2fc475]">+34% vs last month</span>
           </div>
         </div>
-      </DashboardCard>
 
-      {/* AI Alerts */}
-      <DashboardCard title="AI Alerts" className="min-h-[160px]">
-        <ul className="flex flex-col gap-2 mt-1">
-          {alerts.map((alert) => (
-            <li key={alert.label} className="flex items-start gap-2.5">
-              <span className={['w-2 h-2 rounded-full mt-1.5 flex-shrink-0', alert.color].join(' ')} aria-hidden="true" />
-              <span className="text-sm text-[#202939]">{alert.label}</span>
-            </li>
+        {/* Segmented progress bar — ~20 discrete pill segments */}
+        <div className="flex gap-[2px] w-full h-4" role="progressbar" aria-valuenow={82} aria-valuemin={0} aria-valuemax={100}>
+          {Array.from({ length: totalSegments }).map((_, i) => (
+            <div
+              key={i}
+              className="flex-1 rounded-full"
+              style={{ backgroundColor: i < filledSegments ? '#2fc475' : '#e3e8ef' }}
+            />
           ))}
-        </ul>
-      </DashboardCard>
+        </div>
+
+        {/* Metrics 2x2 grid */}
+        <div className="grid grid-cols-2 gap-2">
+          {metrics.map(({ label, value, dotColor }) => (
+            <div key={label} className="flex items-center gap-1.5">
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: dotColor }}
+              />
+              <span className="text-[12px] text-[#697586] flex-1 min-w-0 truncate">{label}</span>
+              <span className="text-[12px] font-semibold text-[#202939]">{value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Intelligence Insights */}
+      <div className="p-5 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#faf5ff] flex items-center justify-center">
+              <Brain className="h-4 w-4 text-[#a855f7]" />
+            </div>
+            <span className="text-[15px] font-semibold text-[#202939]">Intelligence Insights (Today)</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-[#697586]" />
+        </div>
+
+        <div className="flex flex-col gap-[10px]">
+          {insights.map((text) => (
+            <p key={text} className="text-[13px] text-[#202939]">{text}</p>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Row 3: Compliance + Interventions + Students at Risk ─────────────────────
-function ComplianceRow() {
+// ─── Status Cards Row (4 equal columns) ───────────────────────────────────────
+function StatusCardsRow() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {/* Compliance */}
-      <DashboardCard title="Compliance" className="min-h-[140px]">
-        <div className="flex flex-col gap-2 mt-1">
-          {[
-            { label: 'Policy Documents', pct: 92, color: 'bg-[#2fc475]' },
-            { label: 'Staff Certifications', pct: 68, color: 'bg-[#a38654]' },
-            { label: 'Student Records', pct: 87, color: 'bg-[#0ba5ec]' },
-          ].map(({ label, pct, color }) => (
-            <div key={label}>
-              <div className="flex justify-between text-xs text-[#697586] mb-1">
-                <span>{label}</span>
-                <span className="font-medium text-[#202939]">{pct}%</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-[#e2e8f0] overflow-hidden">
-                <div
-                  className={['h-full rounded-full', color].join(' ')}
-                  style={{ width: `${pct}%` }}
-                  role="progressbar"
-                  aria-valuenow={pct}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                />
-              </div>
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      {/* Compliance Status */}
+      <div className="h-[120px] p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#fffbeb] flex items-center justify-center">
+              <ShieldCheck className="h-4 w-4 text-[#f59e0b]" />
             </div>
-          ))}
+            <span className="text-[13px] text-[#697586]">Compliance Status</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-[#697586]" />
         </div>
-      </DashboardCard>
+        <div className="flex items-baseline gap-1">
+          <span className="text-[28px] font-bold leading-none text-[#22c55e]">0</span>
+          <span className="text-base text-[#202939]">critical violations</span>
+        </div>
+        <p className="text-[12px] text-[#697586]">2 grade overrides pending review</p>
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#e37a72]" />
+          <span className="text-[12px] text-[#697586]">Last audit: 3 days ago</span>
+        </div>
+      </div>
 
-      {/* Interventions */}
-      <DashboardCard title="Interventions" value="23" subtitle="Active interventions" className="min-h-[140px]">
-        <div className="flex flex-col gap-1.5 mt-auto">
-          <div className="flex justify-between text-sm">
-            <span className="text-[#697586]">Pending review</span>
-            <span className="font-medium text-[#202939]">8</span>
+      {/* Interventions — TWO side-by-side large numbers */}
+      <div className="h-[120px] p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#eff6ff] flex items-center justify-center">
+              <Activity className="h-4 w-4 text-[#3b82f6]" />
+            </div>
+            <span className="text-[13px] text-[#697586]">Interventions</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-[#697586]">In progress</span>
-            <span className="font-medium text-[#202939]">11</span>
+          <ChevronRight className="h-4 w-4 text-[#697586]" />
+        </div>
+        {/* Two large numbers side-by-side */}
+        <div className="flex flex-row gap-5 items-start">
+          <div className="flex flex-col">
+            <span className="text-[28px] font-bold leading-none text-[#202939]">6</span>
+            <span className="text-[12px] text-[#697586]">Pending</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-[#697586]">Resolved this week</span>
-            <span className="font-medium text-[#2fc475]">4</span>
+          <div className="flex flex-col">
+            <span className="text-[28px] font-bold leading-none text-[#202939]">2</span>
+            <span className="text-[12px] text-[#697586]">Active</span>
           </div>
         </div>
-      </DashboardCard>
+        <p className="text-[12px] text-[#697586]">Avg resolution time: 4.2 days</p>
+      </div>
+
+      {/* Interventions Completed */}
+      <div className="h-[120px] p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#f0fdf4] flex items-center justify-center">
+              <Activity className="h-4 w-4 text-[#22c55e]" />
+            </div>
+            <span className="text-[13px] text-[#697586]">Interventions</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-[#697586]" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-[28px] font-bold leading-none text-[#202939]">2</span>
+          <span className="text-[12px] text-[#697586]">Completed</span>
+        </div>
+      </div>
 
       {/* Students at Risk */}
-      <DashboardCard title="Students at Risk" className="min-h-[140px]">
-        <div className="flex flex-col gap-2 mt-1">
-          {[
-            { label: 'High Risk', count: 7, color: 'text-[#e37a72]', dot: 'bg-[#e37a72]' },
-            { label: 'Medium Risk', count: 18, color: 'text-[#a38654]', dot: 'bg-[#a38654]' },
-            { label: 'Low Risk', count: 34, color: 'text-[#0ba5ec]', dot: 'bg-[#0ba5ec]' },
-          ].map(({ label, count, color, dot }) => (
-            <div key={label} className="flex items-center gap-2">
-              <span className={['w-2.5 h-2.5 rounded-full flex-shrink-0', dot].join(' ')} aria-hidden="true" />
-              <span className="text-sm text-[#697586] flex-1">{label}</span>
-              <span className={['text-sm font-semibold', color].join(' ')}>{count}</span>
+      <div className="h-[120px] p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#fef2f2] flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 text-[#e37a72]" />
             </div>
-          ))}
+            <span className="text-[13px] text-[#697586]">Students at Risk</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-[#697586]" />
         </div>
-      </DashboardCard>
+        <div className="flex flex-col">
+          <span className="text-[28px] font-bold leading-none text-[#202939]">2</span>
+          <span className="text-[12px] text-[#697586]">Out of 620 students (7.7%)</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <TrendingUp className="h-3 w-3 text-[#2fc475]" />
+          <span className="text-[12px] text-[#2fc475]">+5% since last week</span>
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Row 4: Recent Activity + Manage Users ────────────────────────────────────
-function ActivityAndUsersRow() {
-  const activities = [
-    { action: 'New student enrolled', detail: 'Sarah Chen — Grade 10A', time: '2m ago', color: 'bg-[#2fc475]' },
-    { action: 'Risk flag raised', detail: 'John Doe — attendance alert', time: '15m ago', color: 'bg-[#e37a72]' },
-    { action: 'Exam scheduled', detail: 'Chemistry — Block B, Fri 9AM', time: '1h ago', color: 'bg-[#9b8afb]' },
-    { action: 'Intervention closed', detail: 'Case #204 resolved', time: '3h ago', color: 'bg-[#0ba5ec]' },
+// ─── Bottom Panels Row (3fr : 2fr) ─────────────────────────────────────────────
+function BottomPanelsRow() {
+  const absenteesRows = [
+    { grade: '10A', subject: 'Mathematics', teacher: 'Fatima Al-Mansour', absenteeism: '+12%', aboveThreshold: false },
+    { grade: '10B', subject: 'Science', teacher: 'Ahmed Al-Sabah', absenteeism: '+26%', aboveThreshold: true },
+    { grade: '10C', subject: 'Literature', teacher: 'Laila Al-Fahad', absenteeism: '+8%', aboveThreshold: false },
+    { grade: '10D', subject: 'History', teacher: 'Mansour Al-Dtalib', absenteeism: '+76%', aboveThreshold: true },
+    { grade: '10E', subject: 'Art', teacher: 'Sara Al-Jasem', absenteeism: '+35%', aboveThreshold: true },
   ];
 
-  const users = [
-    { name: 'Dr. Emily Watts', role: 'Admin', initials: 'EW', color: 'bg-[#9b8afb]' },
-    { name: 'James Nkosi', role: 'Teacher', initials: 'JN', color: 'bg-[#0ba5ec]' },
-    { name: 'Priya Sharma', role: 'Counselor', initials: 'PS', color: 'bg-[#2fc475]' },
-    { name: 'Tom Rivera', role: 'Staff', initials: 'TR', color: 'bg-[#a38654]' },
+  const barData = [
+    { label: 'Students', primary: 38000, secondary: 42000 },
+    { label: 'Teachers', primary: 8000, secondary: 10000 },
+    { label: 'School Admins', primary: 5000, secondary: 6000 },
+    { label: 'Parents', primary: 38000, secondary: 42000 },
+    { label: 'Staff', primary: 12000, secondary: 15000 },
+    { label: 'Super Admins', primary: 2000, secondary: 3000 },
   ];
+
+  const maxBarValue = 42000;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Recent Activity */}
-      <DashboardCard title="Recent Activity" className="min-h-[180px]">
-        <ul className="flex flex-col divide-y divide-[#e2e8f0]">
-          {activities.map(({ action, detail, time, color }) => (
-            <li key={action} className="flex items-start gap-3 py-2.5 first:pt-1">
-              <span className={['w-2 h-2 rounded-full mt-1.5 flex-shrink-0', color].join(' ')} aria-hidden="true" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#202939]">{action}</p>
-                <p className="text-xs text-[#697586] truncate">{detail}</p>
-              </div>
-              <span className="text-xs text-[#697586] flex-shrink-0">{time}</span>
-            </li>
-          ))}
-        </ul>
-      </DashboardCard>
+    <div className="grid gap-3" style={{ gridTemplateColumns: '3fr 2fr' }}>
+      {/* Absentees Alerts Panel */}
+      <div className="p-5 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[15px] font-semibold text-[#202939]">Absentees Alerts</span>
+          <button className="text-[13px] font-medium text-[#a38654] cursor-pointer hover:underline">
+            View All
+          </button>
+        </div>
+        <p className="text-[12px] text-[#697586] -mt-1">
+          Students who exceeded absenteeism threshold today
+        </p>
 
-      {/* Manage Users */}
-      <DashboardCard title="Manage Users" className="min-h-[180px]">
-        <ul className="flex flex-col divide-y divide-[#e2e8f0]">
-          {users.map(({ name, role, initials, color }) => (
-            <li key={name} className="flex items-center gap-3 py-2.5 first:pt-1">
-              <div
-                className={['w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0', color].join(' ')}
-                aria-hidden="true"
-              >
-                <span className="text-white text-xs font-semibold">{initials}</span>
+        {/* Table */}
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr>
+              {['Grade', 'Subject Name', 'Teacher', 'Absenteeism'].map((col) => (
+                <th key={col} className="pb-2 text-[12px] font-medium text-[#697586]">
+                  <div className="flex items-center gap-1">
+                    {col}
+                    <ArrowUpDown className="h-3 w-3 text-[#697586]" />
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {absenteesRows.map(({ grade, subject, teacher, absenteeism, aboveThreshold }) => (
+              <tr key={grade} className="border-t border-[#f1f5f9]">
+                <td className="py-2.5 text-[13px] text-[#202939]">{grade}</td>
+                <td className="py-2.5 text-[13px] text-[#202939]">{subject}</td>
+                <td className="py-2.5 text-[13px] text-[#202939]">{teacher}</td>
+                <td
+                  className="py-2.5 text-[13px] font-medium"
+                  style={{ color: aboveThreshold ? '#e37a72' : '#697586' }}
+                >
+                  {absenteeism}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* User Distribution by Role Panel */}
+      <div className="p-5 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[15px] font-semibold text-[#202939]">User Distribution by Role</span>
+          <button className="text-[13px] font-medium text-[#a38654] cursor-pointer hover:underline">
+            Manage Users
+          </button>
+        </div>
+        <p className="text-[12px] text-[#697586] -mt-1">Platform user breakdown</p>
+
+        {/* Simple bar chart — inline implementation (no recharts needed for layout) */}
+        <div className="flex items-end gap-2 flex-1" style={{ height: 160 }}>
+          {barData.map(({ label, primary, secondary }) => (
+            <div key={label} className="flex flex-col items-center gap-1 flex-1">
+              <div className="flex items-end gap-0.5 w-full" style={{ height: 130 }}>
+                <div
+                  className="flex-1 rounded-t-sm"
+                  style={{
+                    height: `${(primary / maxBarValue) * 100}%`,
+                    backgroundColor: '#c4aa80',
+                  }}
+                />
+                <div
+                  className="flex-1 rounded-t-sm"
+                  style={{
+                    height: `${(secondary / maxBarValue) * 100}%`,
+                    backgroundColor: '#e8dfc8',
+                  }}
+                />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#202939]">{name}</p>
-                <p className="text-xs text-[#697586]">{role}</p>
-              </div>
-              <button
-                className="p-1 rounded text-[#697586] hover:text-[#a38654] hover:bg-[#f8fafc] transition-colors"
-                aria-label={`Manage ${name}`}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </li>
+              <span className="text-[9px] text-[#697586] text-center leading-tight">{label}</span>
+            </div>
           ))}
-        </ul>
-      </DashboardCard>
+        </div>
+
+        {/* Chart footer */}
+        <div className="flex items-center justify-between">
+          <span className="text-[12px] text-[#697586]">Highest position: Parents</span>
+          <span className="text-[12px] font-semibold text-[#202939]">38000 / 42000</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -266,22 +415,22 @@ function ActivityAndUsersRow() {
 // ─── DashboardBody ────────────────────────────────────────────────────────────
 export default function DashboardBody() {
   return (
-    <main className="flex-1 overflow-y-auto bg-[#f8fafc] p-6">
-      <div className="max-w-7xl mx-auto flex flex-col gap-6">
-        {/* Section 1: Hero / Quick Actions */}
-        <HeroSection />
+    <main className="flex-1 overflow-y-auto bg-[#f8fafc]">
+      <div className="p-6 flex flex-col gap-5">
+        {/* Section 1: Quick Actions */}
+        <QuickActionsSection />
 
         {/* Section 2: 4-card stat row */}
         <StatCardsRow />
 
-        {/* Section 3: 2-card row — Health Index + AI Alerts */}
-        <HealthAndAlertsRow />
+        {/* Section 3: Health Index (3fr) + Intelligence Insights (2fr) */}
+        <HealthAndInsightsRow />
 
-        {/* Section 4: 3-card row — Compliance, Interventions, Students at Risk */}
-        <ComplianceRow />
+        {/* Section 4: 4-card status row */}
+        <StatusCardsRow />
 
-        {/* Section 5: 2-card row — Recent Activity + Manage Users */}
-        <ActivityAndUsersRow />
+        {/* Section 5: Absentees (3fr) + User Distribution (2fr) */}
+        <BottomPanelsRow />
       </div>
     </main>
   );

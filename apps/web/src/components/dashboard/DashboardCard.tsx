@@ -31,7 +31,7 @@ export default function DashboardCard({
   return (
     <div
       className={[
-        'rounded-xl border border-[#e2e8f0] p-5 flex flex-col gap-2',
+        'rounded-[10px] border border-[#e3e8ef] p-4 flex flex-col gap-2',
         altBg ? 'bg-[#f9f8f5]' : 'bg-white',
         className,
       ].join(' ')}

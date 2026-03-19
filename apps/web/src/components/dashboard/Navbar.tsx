@@ -18,7 +18,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
     : null;
 
   return (
-    <header className="h-[72px] flex items-center px-6 bg-white border-b border-[#e2e8f0] flex-shrink-0 gap-4">
+    <header className="h-[56px] flex items-center px-6 bg-white border-b border-[#e3e8ef] flex-shrink-0 gap-4">
       {/* Hamburger — mobile only */}
       <button
         className="md:hidden p-1.5 rounded-lg text-[#697586] hover:text-[#202939] hover:bg-[#f8fafc] transition-colors flex-shrink-0"
@@ -28,14 +28,19 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Search bar — fills available space, max 360px per Figma */}
+      {/* Page title — left zone */}
+      <h1 className="hidden md:block text-base font-semibold text-[#202939] flex-shrink-0">
+        Dashboard
+      </h1>
+
+      {/* Search bar — flex-1, fills available space between title and right controls */}
       <div className="flex-1 hidden md:flex">
-        <div className="flex items-center gap-3 w-[360px] h-12 bg-[#f9f8f5] rounded-xl px-4 border border-[#e2e8f0]">
-          <Search className="h-4 w-4 text-[#697586] flex-shrink-0" />
+        <div className="flex items-center gap-2 w-full h-10 bg-[#f9f8f5] rounded-[10px] px-3 border border-[#e3e8ef]">
+          <Search className="h-[14px] w-[14px] text-[#697586] flex-shrink-0" />
           <input
             type="text"
             placeholder="Search..."
-            className="bg-transparent text-sm text-[#202939] placeholder-[#697586] outline-none flex-1 min-w-0"
+            className="bg-transparent text-[13px] text-[#202939] placeholder-[#697586] outline-none flex-1 min-w-0"
             aria-label="Global search"
           />
         </div>
@@ -45,46 +50,39 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
       <div className="flex-1 md:hidden" />
 
       {/* Right actions */}
-      <div className="flex items-center gap-3 flex-shrink-0">
-        {/* Notification bell — 48×48, bg #f8fafc, radius 12 */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Notification bell — 40×40, rounded-[10px], NO badge dot per Figma */}
         <button
-          className="relative w-12 h-12 bg-[#f8fafc] rounded-xl flex items-center justify-center text-[#697586] hover:text-[#202939] border border-[#e2e8f0] transition-colors flex-shrink-0"
+          className="w-10 h-10 bg-[#f8fafc] rounded-[10px] flex items-center justify-center text-[#697586] hover:text-[#202939] border border-[#e3e8ef] transition-colors flex-shrink-0"
           aria-label="Notifications"
         >
-          <Bell className="h-5 w-5" />
-          <span
-            className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#e37a72] border-2 border-white"
-            aria-hidden="true"
-          />
+          <Bell className="h-4 w-4" />
         </button>
 
-        {/* Profile pill — 218×48, bg #f8fafc, radius 12, gap 8, padding 8 */}
-        <div className="flex items-center gap-2 w-[218px] h-12 bg-[#f8fafc] rounded-xl px-2 border border-[#e2e8f0] flex-shrink-0">
+        {/* Profile pill — 180×40, bg #f8fafc, rounded-[10px], gap 8, padding 10 */}
+        <div className="flex items-center gap-2 w-[180px] h-10 bg-[#f8fafc] rounded-[10px] px-[10px] border border-[#e3e8ef] flex-shrink-0">
           <div
-            className="w-8 h-8 rounded-full bg-[#a38654] flex items-center justify-center flex-shrink-0"
+            className="w-7 h-7 rounded-full bg-[#e2e8f0] flex items-center justify-center flex-shrink-0"
             aria-hidden="true"
           >
             {isLoading ? (
-              <User className="h-4 w-4 text-white" />
+              <User className="h-3.5 w-3.5 text-[#697586]" />
             ) : initials ? (
-              <span className="text-white text-xs font-semibold">{initials}</span>
+              <span className="text-[#697586] text-[11px] font-semibold">{initials}</span>
             ) : (
-              <User className="h-4 w-4 text-white" />
+              <User className="h-3.5 w-3.5 text-[#697586]" />
             )}
           </div>
-          <div className="flex flex-col flex-1 min-w-0">
+          <div className="flex-1 min-w-0">
             {isLoading ? (
-              <span className="text-xs text-[#697586] animate-pulse">Loading...</span>
+              <span className="text-[13px] text-[#697586] animate-pulse">Loading...</span>
             ) : (
-              <>
-                <span className="text-sm font-medium text-[#202939] truncate">
-                  {user?.full_name ?? 'User'}
-                </span>
-                <span className="text-xs text-[#697586] truncate">{user?.email ?? ''}</span>
-              </>
+              <span className="text-[13px] font-medium text-[#202939] truncate block">
+                {user?.full_name ?? 'User'}
+              </span>
             )}
           </div>
-          <ChevronDown className="h-4 w-4 text-[#697586] flex-shrink-0" />
+          <ChevronDown className="h-[14px] w-[14px] text-[#697586] flex-shrink-0" />
         </div>
       </div>
     </header>
