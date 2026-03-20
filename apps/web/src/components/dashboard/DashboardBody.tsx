@@ -2,10 +2,10 @@ import {
   UserPlus,
   Building2,
   ShieldCheck,
-  Download,
+  FileDown,
   Building,
+  Presentation,
   GraduationCap,
-  Users,
   BookOpen,
   ChevronRight,
   TrendingUp,
@@ -22,7 +22,7 @@ function QuickActionsSection() {
     { label: 'Add User', icon: UserPlus, iconBg: '#eff6ff', iconColor: '#3b82f6' },
     { label: 'New Institution', icon: Building2, iconBg: '#fffbeb', iconColor: '#f59e0b' },
     { label: 'Manage Role', icon: ShieldCheck, iconBg: '#f0fdf4', iconColor: '#22c55e' },
-    { label: 'Export Data', icon: Download, iconBg: '#faf5ff', iconColor: '#a855f7' },
+    { label: 'Export Data', icon: FileDown, iconBg: '#faf5ff', iconColor: '#a855f7' },
   ];
 
   return (
@@ -66,7 +66,7 @@ function StatCardsRow() {
       label: 'Teachers',
       value: '40',
       trend: '+56% vs last month',
-      icon: GraduationCap,
+      icon: Presentation,
       iconBg: '#eff6ff',
       iconColor: '#3b82f6',
     },
@@ -74,7 +74,7 @@ function StatCardsRow() {
       label: 'Students Enrolled',
       value: '143,445',
       trend: '+85% vs last month',
-      icon: Users,
+      icon: GraduationCap,
       iconBg: '#f0fdf4',
       iconColor: '#22c55e',
     },
@@ -89,7 +89,7 @@ function StatCardsRow() {
   ];
 
   return (
-    <div data-component="stat-cards" className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+    <div data-component="stat-cards" className="grid grid-cols-2 xl:grid-cols-4 gap-4">
       {stats.map(({ label, value, trend, icon: Icon, iconBg, iconColor }) => (
         <div
           key={label}
@@ -107,7 +107,7 @@ function StatCardsRow() {
             </div>
             <ChevronRight className="h-4 w-4 text-[#697586] flex-shrink-0" />
           </div>
-          <p className="text-[28px] leading-none font-bold text-[#202939]">{value}</p>
+          <p className="text-[32px] leading-none font-semibold text-[#202939]">{value}</p>
           <div className="flex items-center gap-1">
             <TrendingUp className="h-3 w-3 text-[#2fc475]" />
             <span className="text-[12px] text-[#2fc475]">{trend}</span>
@@ -152,7 +152,7 @@ function HealthAndInsightsRow() {
         </div>
 
         <div className="flex items-baseline gap-2">
-          <span className="text-[32px] font-bold leading-none text-[#202939]">82</span>
+          <span className="text-[32px] font-semibold leading-none text-[#202939]">82</span>
           <span className="text-base text-[#697586]">/ 100</span>
           <div className="flex items-center gap-1 ml-1">
             <TrendingUp className="h-3.5 w-3.5 text-[#2fc475]" />
@@ -224,7 +224,7 @@ function StatusCardsRow() {
           <ChevronRight className="h-4 w-4 text-[#697586]" />
         </div>
         <div className="flex items-baseline gap-1">
-          <span className="text-[28px] font-bold leading-none text-[#22c55e]">0</span>
+          <span className="text-[32px] font-semibold leading-none text-[#22c55e]">0</span>
           <span className="text-base text-[#202939]">critical violations</span>
         </div>
         <p className="text-[12px] text-[#697586]">2 grade overrides pending review</p>
@@ -248,11 +248,11 @@ function StatusCardsRow() {
         {/* Two large numbers side-by-side */}
         <div className="flex flex-row gap-5 items-start">
           <div className="flex flex-col">
-            <span className="text-[28px] font-bold leading-none text-[#202939]">6</span>
+            <span className="text-[32px] font-semibold leading-none text-[#202939]">6</span>
             <span className="text-[12px] text-[#697586]">Pending</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[28px] font-bold leading-none text-[#202939]">2</span>
+            <span className="text-[32px] font-semibold leading-none text-[#202939]">2</span>
             <span className="text-[12px] text-[#697586]">Active</span>
           </div>
         </div>
@@ -271,7 +271,7 @@ function StatusCardsRow() {
           <ChevronRight className="h-4 w-4 text-[#697586]" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[28px] font-bold leading-none text-[#202939]">2</span>
+          <span className="text-[32px] font-semibold leading-none text-[#202939]">2</span>
           <span className="text-[12px] text-[#697586]">Completed</span>
         </div>
       </div>
@@ -288,7 +288,7 @@ function StatusCardsRow() {
           <ChevronRight className="h-4 w-4 text-[#697586]" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[28px] font-bold leading-none text-[#202939]">2</span>
+          <span className="text-[32px] font-semibold leading-none text-[#202939]">2</span>
           <span className="text-[12px] text-[#697586]">Out of 620 students (7.7%)</span>
         </div>
         <div className="flex items-center gap-1">
