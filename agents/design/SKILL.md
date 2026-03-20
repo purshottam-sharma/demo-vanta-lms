@@ -266,6 +266,12 @@ If any component has only generic Tailwind guesses (not Figma-sourced values), r
 Return:
 1. `UISpec JSON` — the enriched spec (save to `/tmp/uispec-{task_id}.json`)
 2. `figma_png_path` — `/tmp/figma-{task_id}.png` (for Visual Diff Agent to reuse)
-3. `vision_summary` — 3-5 bullet points of the most important non-obvious design choices the Frontend Agent must not miss
+3. `vision_summary` — 5-10 bullet points of the most important non-obvious design
+   choices the Frontend Agent must not miss. Each bullet must be specific enough
+   that the Visual Diff Agent can check it with a binary PASS/FAIL:
+   - BAD: "Cards have clean spacing"
+   - GOOD: "Stat cards: 4-column grid, gap-4 (16px), card padding p-4 (16px), value text-[32px] font-semibold"
+   - BAD: "Sidebar looks clean"
+   - GOOD: "Sidebar: width 236px, nav item height h-9 (36px), active state bg-[#f8f6f0] with border border-[#e3e8ef]"
 
-The Orchestrator passes all three to the Frontend Agent.
+The Orchestrator passes all three to the Frontend Agent AND to the Visual Diff Agent.

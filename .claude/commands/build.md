@@ -121,12 +121,13 @@ Save WorkOrder. `current_step: 5`.
 Read `agents/visual-diff/SKILL.md`.
 
 Spawn Visual Diff Agent sub-agent:
-- Provide: `figma_png_path` (`/tmp/figma-{task_id}.png`), `vision_summary` (from Design Agent), `task_id`, `route` (primary route from acceptance_criteria, e.g. `/dashboard`), `generated_frontend_files`
-- Instruction: read `agents/visual-diff/SKILL.md`, run Playwright screenshot helper, use Claude Vision to compare rendered output vs Figma PNG — use `vision_summary` as the priority checklist in the Vision prompt so known high-risk choices are verified first, generate fix list with `source` field, route fixes to Frontend Agent, loop until PASSED or max 3 cycles
-- Returns: `VisualDiffReport { status, loops, diffs_found_total, diffs_remaining, vision_summary_checks, fixes_applied }`
+- Provide: `figma_png_path` (`/tmp/figma-{task_id}.png`), `vision_summary` (from Design Agent), `task_id`, `route` (primary route from acceptance_criteria, e.g. `/dashboard`), `generated_frontend_files`, `max_loops: 5`
+- Instruction: read `agents/visual-diff/SKILL.md` carefully and follow it exactly. The agent runs a self-contained loop — it takes screenshots, compares with Vision, and applies CSS fixes DIRECTLY using Read + Edit tools on the source files. It does NOT route fixes to other agents. It loops until score ≥ 95% or max_loops reached.
+- Returns: `VisualDiffReport { status, final_score, loops_run, diffs_found_total, diffs_remaining, priority_checks, fixes_applied }`
 
-**If status = PASSED:** proceed to Step 6, include "Visual diff: PASSED (N diffs fixed)" in Checkpoint 1 summary.
-**If status = MAX_LOOPS_REACHED:** proceed to Step 6, include remaining diffs in Checkpoint 1 summary so the human can decide.
+**If status = PASSED (score ≥ 95):** proceed to Step 6, include "Visual diff: PASSED score={final_score} ({loops_run} loops, {diffs_found_total} diffs fixed)" in Checkpoint 1 summary.
+**If status = MAX_LOOPS_REACHED:** proceed to Step 6, include `final_score` + `diffs_remaining_list` in Checkpoint 1 summary so the human can decide whether to approve or request changes.
+**If status = HALTED_LOW_SCORE:** post diff report to ClickUp, halt, require human fix before proceeding.
 **If Visual Diff Agent errors (Playwright missing, server won't start):** log warning, skip, proceed to Step 6.
 
 Save WorkOrder. `current_step: 5.5`.
