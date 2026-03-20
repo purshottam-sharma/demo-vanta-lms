@@ -33,6 +33,9 @@ Runs as **Step 5.5** — after Testing Agent, before Checkpoint 1.
 ## The Loop
 
 ```
+PRE-LOOP (run once before the pixel loop):
+  Icon Audit — element screenshots + Figma crop comparison → fix all wrong icons first
+
 LOOP up to max_loops:
   Step 1 — Full-page screenshot at 1440×1332 (matches Figma @1x canvas height)
   Step 2 — pixelmatch: full-page score + per-region breakdown + diff PNG
@@ -45,6 +48,82 @@ LOOP up to max_loops:
 
 return MAX_LOOPS_REACHED
 ```
+
+---
+
+## PRE-LOOP — Icon Audit (mandatory, run once before pixel loop)
+
+Icons are small and pixelmatch scores them as low-impact even when wrong shape.
+Run this audit BEFORE the main loop so icons are correct by loop 1.
+
+### Step A — Crop Figma into sections
+```python
+from PIL import Image
+figma = Image.open(figma_png_path)  # @2x, e.g. 2880×2664
+# Adjust y-coords based on actual Figma layout
+figma.crop((0, 0, 472, figma.height)).save('/tmp/figma-icon-sidebar.png')        # sidebar @2x
+figma.crop((472, 72, 2880, 370)).save('/tmp/figma-icon-quick-actions.png')       # quick actions @2x
+figma.crop((472, 370, 2880, 610)).save('/tmp/figma-icon-stat-cards.png')         # stat cards @2x
+figma.crop((472, 870, 2880, 1200)).save('/tmp/figma-icon-status-cards.png')      # status cards @2x
+```
+
+### Step B — Take element-level screenshots of same sections
+```bash
+python3 agents/shared/playwright_screenshot.py {route} /tmp/rendered-icon-sidebar.png \
+  --selector "[data-component='sidebar']"
+python3 agents/shared/playwright_screenshot.py {route} /tmp/rendered-icon-quick-actions.png \
+  --selector "[data-component='quick-actions']"
+python3 agents/shared/playwright_screenshot.py {route} /tmp/rendered-icon-stat-cards.png \
+  --selector "[data-component='stat-cards']"
+python3 agents/shared/playwright_screenshot.py {route} /tmp/rendered-icon-status-cards.png \
+  --selector "[data-component='status-cards']"
+```
+
+### Step C — Ask Gemini to compare icon pairs section by section
+
+Write prompt to file then call Gemini with ONE Figma crop + ONE rendered screenshot at a time.
+Comparing section-by-section is more accurate than giving Gemini all images at once.
+
+```bash
+cat > /tmp/icon-prompt.txt << 'PROMPT'
+Compare these two images of the SAME UI section. First is Figma (ground truth), second is rendered React.
+
+Look at every icon in every card/row carefully. Compare shape, symbol, and style.
+List ONLY mismatches (icons that look different between the two images).
+
+For each mismatch output:
+{
+  "label": "card or nav item label",
+  "figma_icon": "exact shape description (e.g. lightning bolt, envelope, graduation cap on person)",
+  "rendered_icon": "exact shape description",
+  "lucide_fix": "LucideIconName"
+}
+
+Return JSON array. Return [] if all icons match.
+PROMPT
+
+# Run for each section pair
+python3 agents/shared/gemini.py --prompt-file /tmp/icon-prompt.txt \
+  --image /tmp/figma-icon-sidebar.png --image /tmp/rendered-icon-sidebar.png \
+  --json > /tmp/icon-audit-sidebar.json
+
+python3 agents/shared/gemini.py --prompt-file /tmp/icon-prompt.txt \
+  --image /tmp/figma-icon-quick-actions.png --image /tmp/rendered-icon-quick-actions.png \
+  --json > /tmp/icon-audit-quick-actions.json
+
+# ... repeat for each section
+```
+
+### Step D — Apply icon fixes
+For each mismatch found: update the icon import and assignment in the source file.
+Verify the lucide icon name exists before applying:
+```bash
+node -e "const l=require('./node_modules/lucide-react'); console.log(!!l.{IconName})"
+```
+
+### Step E — Confirm fixes with a second Gemini pass
+Re-screenshot and re-compare the fixed sections. Only proceed to the pixel loop once
+all icon audits return [].
 
 ---
 
