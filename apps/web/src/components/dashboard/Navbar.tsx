@@ -35,7 +35,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
 
       {/* Search bar — flex-1, fills available space between title and right controls */}
       <div className="flex-1 hidden md:flex">
-        <div className="flex items-center gap-2 w-full h-10 bg-[#f9f8f5] rounded-[10px] px-3 border border-[#e3e8ef]">
+        <div className="flex items-center gap-2 w-full max-w-[360px] h-10 bg-[#f9f8f5] rounded-[10px] px-3 border border-[#e3e8ef]">
           <Search className="h-[14px] w-[14px] text-[#697586] flex-shrink-0" />
           <input
             type="text"
@@ -53,14 +53,14 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
       <div className="flex items-center gap-2 flex-shrink-0">
         {/* Notification bell — 40×40, rounded-[10px], NO badge dot per Figma */}
         <button
-          className="w-10 h-10 bg-[#f8fafc] rounded-[10px] flex items-center justify-center text-[#697586] hover:text-[#202939] border border-[#e3e8ef] transition-colors flex-shrink-0"
+          className="w-12 h-12 bg-[#f8fafc] rounded-xl flex items-center justify-center text-[#697586] hover:text-[#202939] border border-[#e3e8ef] transition-colors flex-shrink-0"
           aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />
         </button>
 
         {/* Profile pill — 180×40, bg #f8fafc, rounded-[10px], gap 8, padding 10 */}
-        <div className="flex items-center gap-2 w-[180px] h-10 bg-[#f8fafc] rounded-[10px] px-[10px] border border-[#e3e8ef] flex-shrink-0">
+        <div className="flex items-center gap-2 w-[218px] h-12 bg-[#f8fafc] rounded-xl px-[10px] border border-[#e3e8ef] flex-shrink-0">
           <div
             className="w-7 h-7 rounded-full bg-[#e2e8f0] flex items-center justify-center flex-shrink-0"
             aria-hidden="true"
