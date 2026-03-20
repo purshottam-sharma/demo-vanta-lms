@@ -131,11 +131,15 @@ and the diff PNG image instead.
 
 ---
 
-## Step 3 — Vision Reads the Diff PNG
+## Step 3 — Gemini Reads the Diff PNG
 
-Read the diff PNG and ask Vision:
+**Use Gemini 2.5 Pro for this step** — superior at identifying specific pixel differences
+in diff images compared to Claude Vision.
 
-```
+Write the prompt and call Gemini:
+
+```bash
+cat > /tmp/diff-prompt-{task_id}.txt << PROMPT
 This is a pixel diff image comparing a Figma design vs a rendered React page.
 - Grey pixels = identical (good)
 - Yellow pixels = antialiasing differences (ignore)
@@ -150,10 +154,9 @@ For every RED region you see:
 3. Which source file likely controls it?
 4. What exact CSS change would fix it?
 
-If you are uncertain about exact values (px, hex colors), say so — the agent
-will use figma_lookup.py to get authoritative measurements from the Figma API.
+If you are uncertain about exact values (px, hex colors), say so — set needs_figma_lookup: true.
 
-Output as JSON array:
+Output as a JSON array only (no markdown, no explanation):
 [
   {
     "component": "SchoolHealthProgressBar",
@@ -173,7 +176,19 @@ Output as JSON array:
 ]
 
 If there are no red regions (only grey/yellow), return: { "status": "PASSED" }
+PROMPT
+
+python3 agents/shared/gemini.py \
+  --prompt-file /tmp/diff-prompt-{task_id}.txt \
+  --image /tmp/diff-{task_id}.png \
+  --json \
+  > /tmp/diff-analysis-{task_id}.json
 ```
+
+Parse `/tmp/diff-analysis-{task_id}.json`. If it contains `{ "status": "PASSED" }` → exit loop with PASSED.
+
+**Fallback:** If `gemini.py` exits with code 1, fall back to reading the diff PNG directly
+with Claude Vision using the same prompt. Log the fallback.
 
 ---
 

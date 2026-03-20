@@ -5,6 +5,12 @@ argument-hint: CU-{task_id}
 
 You are the **Orchestrator** for Vanta LMS. Execute the full build pipeline for ClickUp task `$ARGUMENTS`.
 
+## Multi-Model Routing
+Read `agents/shared/multi-model-strategy.md` for full details. Key rules:
+- **Gemini 2.5 Pro** → vision steps only (Design Agent Step 4, Visual Diff Agent Step 3) — called via `python3 agents/shared/gemini.py`
+- **Claude Opus 4.6** → Visual Diff Agent loop runner (spawn with `model: opus`)
+- **Claude Sonnet 4.6** → all other agents (default)
+
 ## Your Inputs
 - Task ID: `$ARGUMENTS`
 - Field IDs: read `.mcp/clickup-fields.json`

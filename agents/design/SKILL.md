@@ -73,11 +73,15 @@ If export fails, log a warning and continue — JSON data is sufficient for meas
 
 ---
 
-## Step 4 — Vision Analysis (the enrichment layer)
+## Step 4 — Vision Analysis (Gemini 2.5 Pro)
 
-Read the downloaded PNG and analyse it with Claude Vision using this prompt:
+**Use Gemini for this step** — it produces better image understanding than Claude Vision
+for design frames with dense layout information.
 
-```
+Write the prompt to a temp file, then call Gemini:
+
+```bash
+cat > /tmp/vision-prompt-{task_id}.txt << 'PROMPT'
 You are a senior UI engineer analysing a Figma design frame to extract implementation
 instructions for a React + Tailwind developer.
 
@@ -113,9 +117,18 @@ Look at this design carefully. For each major component or section, describe:
 
 Be specific and concrete. Avoid vague terms like "clean" or "modern".
 A developer reading your output should be able to implement this without seeing the image.
+PROMPT
+
+python3 agents/shared/gemini.py \
+  --prompt-file /tmp/vision-prompt-{task_id}.txt \
+  --image /tmp/figma-{task_id}.png \
+  > /tmp/vision-analysis-{task_id}.txt
 ```
 
-Store the Vision output as `vision_analysis` in the UISpec.
+Read `/tmp/vision-analysis-{task_id}.txt` and store as `vision_analysis` in the UISpec.
+
+**Fallback:** If `gemini.py` fails (API key missing, network error), fall back to reading
+the PNG directly with Claude Vision using the same prompt. Log the fallback.
 
 ---
 
