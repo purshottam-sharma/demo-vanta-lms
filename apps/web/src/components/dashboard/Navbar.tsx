@@ -37,7 +37,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
 
       {/* Left: Breadcrumb — Home icon (gold) + "Dashboard" text */}
       <div className="flex-1 hidden md:flex items-center gap-2">
-        <Home className="h-5 w-5 text-[#a38654] flex-shrink-0" />
+        <Home className="h-6 w-6 text-[#a38654] flex-shrink-0" />
         <span className="text-[16px] font-medium text-[#202939]">Dashboard</span>
       </div>
 
@@ -48,7 +48,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
       <div className="flex items-center gap-3 flex-shrink-0">
         {/* Search bar — 360x48, bg-[#faf8f5], border-[#f4f0eb], rounded-xl, px-4, gap-[10px] */}
         <div className="hidden md:flex items-center gap-[10px] w-[360px] h-12 bg-[#faf8f5] rounded-xl px-4 border border-[#f4f0eb]">
-          <Search className="h-[14px] w-[14px] text-[#4f3b30] flex-shrink-0" />
+          <Search className="h-5 w-5 text-[#4f3b30] flex-shrink-0" />
           <input
             type="text"
             placeholder="Global Search"
@@ -90,7 +90,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
               </span>
             )}
           </div>
-          <ChevronDown className="h-[14px] w-[14px] text-[#697586] flex-shrink-0" />
+          <ChevronDown className="h-[18px] w-[18px] text-[#697586] flex-shrink-0" />
         </div>
       </div>
     </header>

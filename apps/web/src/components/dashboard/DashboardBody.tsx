@@ -28,16 +28,16 @@ function QuickActionsSection() {
   ];
 
   return (
-    <div data-component="quick-actions" className="bg-white rounded-xl border border-[#e3e8ef] p-4 flex flex-col gap-4">
+    <div data-component="quick-actions" className="w-[1156px] bg-white rounded-xl border border-[#e3e8ef] p-4 flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="text-[24px] font-semibold leading-[28px] text-[#202939]">Quick Actions</h2>
         <p className="text-[16px] leading-[24px] text-[#697586]">Frequently used administrative functions</p>
       </div>
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="flex flex-row gap-6">
         {actions.map(({ label, icon: Icon, iconColor }) => (
           <button
             key={label}
-            className="flex flex-row items-center gap-3 h-14 px-5 py-4 rounded-xl bg-[#faf8f5] border border-[#f6f3ef] hover:border-[#a38654] hover:shadow-sm transition-all cursor-pointer"
+            className="w-[263px] flex flex-row items-center gap-3 h-14 px-5 py-4 rounded-xl bg-[#faf8f5] border border-[#f6f3ef] hover:border-[#a38654] hover:shadow-sm transition-all cursor-pointer"
           >
             <Icon className="h-6 w-6 flex-shrink-0" style={{ color: iconColor }} />
             <span className="text-[16px] font-semibold text-[#202939] text-left">{label}</span>
@@ -63,7 +63,7 @@ function StatCardsRow() {
   return (
     <div data-component="stat-cards" className="flex flex-row gap-6">
       {stats.map(({ label, value, trend, trendLabel, icon: Icon, iconBg }) => (
-        <div key={label} className="flex-1 h-[144px] p-4 rounded-xl bg-white border border-[#e3e8ef] flex flex-col gap-3">
+        <div key={label} className="w-[271px] flex-shrink-0 h-[144px] p-4 rounded-xl bg-white border border-[#e3e8ef] flex flex-col gap-3">
           {/* Row 1: icon badge + label + expand arrow */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -76,8 +76,8 @@ function StatCardsRow() {
               <ArrowRight className="h-[18px] w-[18px] text-[#202939]" />
             </div>
           </div>
-          {/* Row 2: stat value */}
-          <p className="text-[32px] leading-none font-semibold text-[#202939]">{value}</p>
+          {/* Row 2: stat value — UISpec: lineHeightPx 32 */}
+          <p className="text-[32px] leading-[32px] font-semibold text-[#202939]">{value}</p>
           {/* Row 3: trend */}
           <div className="flex items-center gap-1">
             <TrendingUp className="h-3 w-3 text-[#2fc475] flex-shrink-0" />
@@ -113,8 +113,8 @@ function HealthAndInsightsRow() {
 
   return (
     <div className="flex flex-row gap-6">
-      {/* School Health Index — 566x232 */}
-      <div data-component="school-health" className="flex-1 rounded-xl bg-white border border-[#e3e8ef] p-4 flex flex-col gap-4">
+      {/* School Health Index — 566x232 per UISpec */}
+      <div data-component="school-health" className="w-[566px] flex-shrink-0 rounded-xl bg-white border border-[#e3e8ef] p-4 flex flex-col gap-4">
         {/* Title row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ function HealthAndInsightsRow() {
 
         {/* Score + trend — "82 / 100" as single text (32px) */}
         <div className="flex items-center gap-3">
-          <span className="text-[32px] font-semibold leading-none text-[#202939]">82 / 100</span>
+          <span className="text-[32px] font-semibold leading-[32px] text-[#202939]">82 / 100</span>
           <div className="flex items-center gap-1">
             <span className="text-[16px] font-semibold text-[#2fc475]">+ 34%</span>
             <span className="text-[16px] text-[#697586]">vs last month</span>
@@ -160,8 +160,8 @@ function HealthAndInsightsRow() {
         </div>
       </div>
 
-      {/* Intelligence Insights — 566x232 */}
-      <div data-component="intelligence-insights" className="flex-1 rounded-xl bg-white border border-[#e3e8ef] p-4 flex flex-col gap-3">
+      {/* Intelligence Insights — 566x232 per UISpec */}
+      <div data-component="intelligence-insights" className="w-[566px] flex-shrink-0 rounded-xl bg-white border border-[#e3e8ef] p-4 flex flex-col gap-3">
         {/* Title row: AI badge is 24x24 r=4 (NOT 32x32 r=8 like other cards) */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -195,8 +195,8 @@ function HealthAndInsightsRow() {
 function StatusCardsRow() {
   return (
     <div data-component="status-cards" className="flex flex-row gap-6">
-      {/* Compliance Status */}
-      <div className="flex-1 h-[172px] p-4 rounded-xl bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      {/* Compliance Status — 369px per UISpec */}
+      <div className="w-[369px] flex-shrink-0 h-[172px] p-4 rounded-xl bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#a38654] flex items-center justify-center flex-shrink-0">
@@ -209,7 +209,7 @@ function StatusCardsRow() {
           </div>
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-[32px] font-semibold leading-none text-[#202939]">0</span>
+          <span className="text-[32px] font-semibold leading-[32px] text-[#202939]">0</span>
           <span className="text-[16px] text-[#202939]">critical violations</span>
         </div>
         <p className="text-[14px] text-[#697586]">2 grade overrides pending review</p>
@@ -219,8 +219,8 @@ function StatusCardsRow() {
         </div>
       </div>
 
-      {/* Interventions — 3 metrics in one card */}
-      <div className="flex-1 h-[172px] p-4 rounded-xl bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      {/* Interventions — 369px per UISpec */}
+      <div className="w-[369px] flex-shrink-0 h-[172px] p-4 rounded-xl bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#f7f5ef] flex items-center justify-center flex-shrink-0">
@@ -233,14 +233,14 @@ function StatusCardsRow() {
           </div>
         </div>
         {/* 3 metrics side by side */}
-        <div className="flex flex-row gap-5">
+        <div className="flex flex-row gap-4">
           {[
             { value: '6', label: 'Pending' },
             { value: '2', label: 'Active' },
             { value: '2', label: 'Completed' },
           ].map(({ value, label }) => (
             <div key={label} className="flex flex-col">
-              <span className="text-[32px] font-semibold leading-none text-[#202939]">{value}</span>
+              <span className="text-[32px] font-semibold leading-[32px] text-[#202939]">{value}</span>
               <span className="text-[12px] text-[#697586]">{label}</span>
             </div>
           ))}
@@ -250,8 +250,8 @@ function StatusCardsRow() {
         </p>
       </div>
 
-      {/* Students at Risk */}
-      <div className="flex-1 h-[180px] p-4 rounded-xl bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      {/* Students at Risk — 369px per UISpec */}
+      <div className="w-[369px] flex-shrink-0 h-[180px] p-4 rounded-xl bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#f7f5ef] flex items-center justify-center flex-shrink-0">
@@ -264,7 +264,7 @@ function StatusCardsRow() {
           </div>
         </div>
         <div className="flex flex-col">
-          <span className="text-[32px] font-semibold leading-none text-[#202939]">2</span>
+          <span className="text-[32px] font-semibold leading-[32px] text-[#202939]">2</span>
           <span className="text-[12px] text-[#697586]">Out of 620 students (7.7%)</span>
         </div>
         <div className="flex items-center gap-1">
@@ -312,8 +312,8 @@ function BottomPanelsRow() {
 
   return (
     <div className="flex flex-row gap-6">
-      {/* Absentees Alerts — no outer padding; children have own padding */}
-      <div data-component="absentees-table" className="flex-1 rounded-xl bg-white border border-[#e3e8ef] flex flex-col overflow-hidden">
+      {/* Absentees Alerts — 566px wide per UISpec, no outer padding; children have own padding */}
+      <div data-component="absentees-table" className="w-[566px] flex-shrink-0 rounded-xl bg-white border border-[#e3e8ef] flex flex-col overflow-hidden">
         {/* Card header: p-4, flex-row justify-between */}
         <div className="flex items-start justify-between p-4 gap-4">
           <div className="flex flex-col gap-1">
@@ -357,8 +357,8 @@ function BottomPanelsRow() {
         </div>
       </div>
 
-      {/* User Distribution by Role */}
-      <div data-component="user-distribution" className="flex-1 rounded-xl bg-white border border-[#e3e8ef] p-4 flex flex-col gap-6">
+      {/* User Distribution by Role — 566px wide per UISpec */}
+      <div data-component="user-distribution" className="w-[566px] flex-shrink-0 rounded-xl bg-white border border-[#e3e8ef] p-4 flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">

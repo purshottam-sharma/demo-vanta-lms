@@ -95,7 +95,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex flex-col gap-3 p-2 flex-1 min-h-0">
           {/* Search bar — 220x40, rounded-xl, border #e3e8ef, padding 12px, gap 10 */}
           <div className="flex items-center gap-[10px] bg-white rounded-xl h-10 px-3 border border-[#e3e8ef]">
-            <Search className="h-[14px] w-[14px] text-[#9aa4b2] flex-shrink-0" />
+            <Search className="h-5 w-5 text-[#9aa4b2] flex-shrink-0" />
             <input
               type="text"
               placeholder="Global Search"
@@ -130,9 +130,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       ].join(' ')}
                       aria-current={isActive ? 'page' : undefined}
                     >
-                      {/* Icon: h-4 w-4, inactive color #9aa4b2, active color #a38654 via text inherit */}
+                      {/* Icon: h-5 w-5, inactive color #9aa4b2, active color #a38654 */}
                       <Icon
-                        className="h-4 w-4 flex-shrink-0"
+                        className="h-5 w-5 flex-shrink-0"
                         style={{ color: isActive ? '#a38654' : '#9aa4b2' }}
                       />
                       <span>{label}</span>
@@ -147,7 +147,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Footer — Settings button, border-top, p-2 */}
         <div className="px-2 py-2 border-t border-[#e3e8ef] flex-shrink-0">
           <button className="flex items-center gap-3 h-10 w-full px-3 rounded-lg text-[14px] font-normal text-[#697586] hover:bg-[#f8fafc] hover:text-[#202939] transition-colors">
-            <Settings className="h-4 w-4 flex-shrink-0" style={{ color: '#9aa4b2' }} />
+            <Settings className="h-5 w-5 flex-shrink-0" style={{ color: '#9aa4b2' }} />
             <span>Settings</span>
           </button>
         </div>
