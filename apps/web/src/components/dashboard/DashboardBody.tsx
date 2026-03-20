@@ -12,7 +12,7 @@ import {
   Brain,
   Activity,
   AlertTriangle,
-  ShieldAlert,
+  FileHeart,
   ArrowUpDown,
 } from 'lucide-react';
 
@@ -144,7 +144,7 @@ function HealthAndInsightsRow() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-[#fff1f0] flex items-center justify-center">
-              <Activity className="h-4 w-4 text-[#f87171]" />
+              <FileHeart className="h-4 w-4 text-[#f87171]" />
             </div>
             <span className="text-[15px] font-semibold text-[#202939]">School Health Index</span>
           </div>
@@ -377,29 +377,46 @@ function BottomPanelsRow() {
         </div>
         <p className="text-[12px] text-[#697586] -mt-1">Platform user breakdown</p>
 
-        {/* Simple bar chart — inline implementation (no recharts needed for layout) */}
-        <div className="flex items-end gap-2 flex-1" style={{ height: 160 }}>
-          {barData.map(({ label, primary, secondary }) => (
-            <div key={label} className="flex flex-col items-center gap-1 flex-1">
-              <div className="flex items-end gap-0.5 w-full" style={{ height: 130 }}>
-                <div
-                  className="flex-1 rounded-t-sm"
-                  style={{
-                    height: `${(primary / maxBarValue) * 100}%`,
-                    backgroundColor: '#c4aa80',
-                  }}
-                />
-                <div
-                  className="flex-1 rounded-t-sm"
-                  style={{
-                    height: `${(secondary / maxBarValue) * 100}%`,
-                    backgroundColor: '#e8dfc8',
-                  }}
-                />
-              </div>
-              <span className="text-[9px] text-[#697586] text-center leading-tight">{label}</span>
+        {/* Bar chart with Y-axis labels + gridlines — matches Figma */}
+        <div className="flex gap-2" style={{ height: 180 }}>
+          {/* Y-axis labels */}
+          <div className="flex flex-col justify-between items-end flex-shrink-0 pb-5" style={{ height: 180 }}>
+            {[42000, 36000, 30000, 24000, 18000, 12000, 6000, 0].map((v) => (
+              <span key={v} className="text-[9px] text-[#697586]">{v.toLocaleString()}</span>
+            ))}
+          </div>
+
+          {/* Chart area with gridlines + bars */}
+          <div className="flex-1 relative flex flex-col">
+            {/* Horizontal gridlines */}
+            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none" style={{ bottom: 20 }}>
+              {[0,1,2,3,4,5,6,7].map((i) => (
+                <div key={i} className="w-full border-t border-[#f1f5f9]" />
+              ))}
             </div>
-          ))}
+
+            {/* Bars */}
+            <div className="flex items-end gap-1.5 flex-1" style={{ paddingBottom: 20 }}>
+              {barData.map(({ label, primary, secondary }) => (
+                <div key={label} className="flex flex-col items-center gap-0.5 flex-1">
+                  <div className="flex items-end gap-[2px] w-full" style={{ height: 140 }}>
+                    <div
+                      className="flex-1 rounded-t-[2px]"
+                      style={{ height: `${(primary / maxBarValue) * 100}%`, backgroundColor: '#c4aa80' }}
+                    />
+                    <div
+                      className="flex-1 rounded-t-[2px]"
+                      style={{
+                        height: `${(secondary / maxBarValue) * 100}%`,
+                        backgroundImage: 'repeating-linear-gradient(90deg, #e8dfc8 0px, #e8dfc8 3px, #f5f0e6 3px, #f5f0e6 6px)',
+                      }}
+                    />
+                  </div>
+                  <span className="text-[8px] text-[#697586] text-center leading-tight">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Chart footer */}

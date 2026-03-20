@@ -1,0 +1,14 @@
+{
+  "_comment": "Crop regions for dashboard. Viewport: 1440x1332 (matches Figma @1x). Format: [x1, y1, x2, y2]",
+  "_sidebar_width": "236px",
+  "_content_start": "x=236 (after sidebar)",
+  "sidebar":                [0,   0,   236,  1332],
+  "navbar":                 [236, 0,   1440, 36],
+  "quick_actions":          [236, 36,  1440, 185],
+  "stat_cards":             [236, 185, 1440, 305],
+  "school_health":          [236, 308, 738,  465],
+  "intelligence_insights":  [738, 308, 1440, 465],
+  "status_cards":           [236, 468, 1440, 580],
+  "absentees_table":        [236, 583, 738,  720],
+  "user_distribution":      [738, 583, 1440, 720]
+}

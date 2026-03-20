@@ -64,7 +64,7 @@ def screenshot(
     route: str,
     output_path: str,
     viewport_width: int = 1440,
-    viewport_height: int = 900,
+    viewport_height: int = 1332,
 ) -> None:
     try:
         from playwright.sync_api import sync_playwright
@@ -128,7 +128,7 @@ def screenshot(
             page.wait_for_timeout(2000)  # Extra buffer for web fonts / CSS injection
 
             os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-            page.screenshot(path=output_path, full_page=False)
+            page.screenshot(path=output_path, full_page=True)
             browser.close()
             print(f"Screenshot saved → {output_path}", flush=True)
 
@@ -146,6 +146,6 @@ if __name__ == "__main__":
     _route = sys.argv[1]
     _output = sys.argv[2]
     _width = int(sys.argv[3]) if len(sys.argv) > 3 else 1440
-    _height = int(sys.argv[4]) if len(sys.argv) > 4 else 900
+    _height = int(sys.argv[4]) if len(sys.argv) > 4 else 1332
 
     screenshot(_route, _output, _width, _height)
