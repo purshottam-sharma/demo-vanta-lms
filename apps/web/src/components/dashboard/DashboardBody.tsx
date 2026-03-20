@@ -121,10 +121,10 @@ function StatCardsRow() {
 // ─── Health + Insights Row (3fr : 2fr) ────────────────────────────────────────
 function HealthAndInsightsRow() {
   const metrics = [
-    { label: 'Attendance', value: '88%', dotColor: '#2fc475' },
-    { label: 'Academic consistency', value: '7%', dotColor: '#e37a72' },
-    { label: 'Teacher workload balance', value: '75%', dotColor: '#2fc475' },
-    { label: 'Policy compliance', value: '92%', dotColor: '#2fc475' },
+    { label: 'Attendance:', value: '88%', dotColor: '#22c55e' },
+    { label: 'Academic consistency:', value: '7%', dotColor: '#e37a72' },
+    { label: 'Teacher workload balance:', value: '75%', dotColor: '#f59e0b' },
+    { label: 'Policy compliance:', value: '92%', dotColor: '#22c55e' },
   ];
 
   const insights = [
@@ -133,8 +133,8 @@ function HealthAndInsightsRow() {
     'Attendance drop linked to timetable change',
   ];
 
-  // Segmented progress bar: 20 small pill segments
-  const totalSegments = 20;
+  // Segmented progress bar: 30 small square segments (matches Figma)
+  const totalSegments = 30;
   const filledSegments = Math.round((82 / 100) * totalSegments);
 
   return (
@@ -143,8 +143,8 @@ function HealthAndInsightsRow() {
       <div className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#f0fdf4] flex items-center justify-center">
-              <ShieldAlert className="h-4 w-4 text-[#22c55e]" />
+            <div className="w-8 h-8 rounded-xl bg-[#fff1f0] flex items-center justify-center">
+              <Activity className="h-4 w-4 text-[#f87171]" />
             </div>
             <span className="text-[15px] font-semibold text-[#202939]">School Health Index</span>
           </div>
@@ -160,26 +160,26 @@ function HealthAndInsightsRow() {
           </div>
         </div>
 
-        {/* Segmented progress bar — ~20 discrete pill segments */}
-        <div className="flex gap-[2px] w-full h-3" role="progressbar" aria-valuenow={82} aria-valuemin={0} aria-valuemax={100}>
+        {/* Segmented progress bar — 30 small square segments (Figma style) */}
+        <div className="flex gap-[3px] w-full h-[10px]" role="progressbar" aria-valuenow={82} aria-valuemin={0} aria-valuemax={100}>
           {Array.from({ length: totalSegments }).map((_, i) => (
             <div
               key={i}
-              className="flex-1 rounded-full"
-              style={{ backgroundColor: i < filledSegments ? '#2fc475' : '#e3e8ef' }}
+              className="flex-1 rounded-[2px]"
+              style={{ backgroundColor: i < filledSegments ? '#22c55e' : '#e5e7eb' }}
             />
           ))}
         </div>
 
         {/* Metrics 2x2 grid */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           {metrics.map(({ label, value, dotColor }) => (
             <div key={label} className="flex items-center gap-1.5">
               <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
+                className="w-2 h-2 rounded-sm flex-shrink-0"
                 style={{ backgroundColor: dotColor }}
               />
-              <span className="text-[12px] text-[#697586] flex-1 min-w-0 truncate">{label}</span>
+              <span className="text-[12px] text-[#697586] flex-1 min-w-0">{label}</span>
               <span className="text-[12px] font-semibold text-[#202939]">{value}</span>
             </div>
           ))}
