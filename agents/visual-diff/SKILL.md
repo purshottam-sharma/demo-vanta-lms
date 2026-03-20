@@ -1,12 +1,13 @@
 # Visual Diff Agent
 
 ## Role
-Close the gap between the Figma design and the rendered frontend by running a
-Vision-powered diff loop. Each iteration: screenshot → compare → patch files
-directly → re-screenshot → compare again. Loop until score ≥ 95% or max loops.
+Close the gap between the Figma design and the rendered frontend using a
+**two-layer comparison**:
+1. `pixelmatch.py` — real pixel-level diff (objective, per-region scores)
+2. Claude Vision — reads the diff PNG to understand *what* is wrong and *how* to fix it
 
-The agent applies CSS fixes **itself** using Read + Edit tools. It does NOT route
-fixes back to the Frontend Agent — that round-trip loses context and wastes loops.
+The agent applies CSS fixes **directly** using Read + Edit tools. It loops until
+the pixelmatch full-page score ≥ 98% or max_loops reached.
 
 ---
 
@@ -17,11 +18,12 @@ Runs as **Step 5.5** — after Testing Agent, before Checkpoint 1.
 ---
 
 ## Inputs
-- `figma_png_path` — Figma frame PNG at `/tmp/figma-{task_id}.png`
-- `vision_summary` — bullet list of non-obvious design choices from Design Agent
-- `task_id` — for file paths
+- `figma_png_path` — Figma frame PNG at `/tmp/figma-{task_id}.png` (exported @2x by Design Agent)
+- `vision_summary` — bullet list of measurable design choices from Design Agent
+- `task_id`
 - `route` — frontend route to screenshot (e.g. `/dashboard`)
-- `generated_frontend_files` — list of frontend source files (scope for edits)
+- `generated_frontend_files` — list of editable source files
+- `regions_json` — optional path to component region map (e.g. `agents/shared/dashboard-regions.json`)
 - `max_loops` — default 5
 
 ---
@@ -29,127 +31,114 @@ Runs as **Step 5.5** — after Testing Agent, before Checkpoint 1.
 ## The Loop
 
 ```
-SCORE = 0
 LOOP up to max_loops:
-  Step 1 — Screenshot the rendered page
-  Step 2 — Vision comparison → score + structured diff list
-  if SCORE >= 95 → return PASSED
-  Step 3 — Apply fixes directly (Read + Edit files)
-  Step 4 — Wait 1.5s for HMR to apply changes
-  continue loop
+  Step 1 — Screenshot at 1440×1332 (matches Figma @1x canvas height)
+  Step 2 — pixelmatch: full-page score + per-region breakdown + diff PNG
+  if full-page score ≥ 98% → PASSED
+  Step 3 — Vision reads the diff PNG → identifies what's red and why
+  Step 4 — Apply fixes directly (Read + Edit source files)
+  Step 5 — sleep 1 (HMR)
+  continue
 
-return MAX_LOOPS_REACHED with remaining diffs
+return MAX_LOOPS_REACHED
 ```
 
 ---
 
-## Step 1 — Screenshot the Rendered Page
+## Step 1 — Screenshot
 
 ```bash
-python3 agents/shared/playwright_screenshot.py {route} /tmp/rendered-{task_id}.png 1440 900
+python3 agents/shared/playwright_screenshot.py {route} /tmp/rendered-{task_id}.png 1440 1332
 ```
 
-This script auto-detects the Vite dev server port (checks 3000, 3001, 3002, 3003, 5173),
-injects mock auth into sessionStorage, mocks `/api/v1/users/me`, waits for networkidle
-+ 2s buffer, then screenshots at 1440×900.
+**Why 1440×1332?** The Figma canvas exports at @2x (2880×2664 pixels). At @1x that is 1440×1332.
+Matching the viewport height to the Figma @1x height aligns the two images so pixel comparison is valid.
 
-**If screenshot fails:** log warning, skip loop, include warning in Checkpoint 1 summary.
+If the page content fits in less than 1332px, the extra space is empty white — that's fine,
+pixelmatch will score it as matching (white = white).
 
 ---
 
-## Step 2 — Vision Comparison
+## Step 2 — Pixelmatch
 
-Read **both** PNG files and run Vision with this exact prompt:
+```bash
+python3 agents/shared/pixelmatch.py \
+  {figma_png_path} \
+  /tmp/rendered-{task_id}.png \
+  /tmp/diff-{task_id}.png \
+  --regions {regions_json}
+```
+
+Parse the JSON output:
+- `score` — full-page similarity (0-100). Target: ≥ 98
+- `diff_pixels` — total pixel count that differ
+- `diff_image` — path to diff PNG (grey=same, red=wrong, yellow=antialiasing)
+- `regions` — per-component breakdown: `{ "school_health": { "score": 96.2, "diff_pixels": 3000 } }`
+
+**Important:** `regions` scores are only valid when section Y-coordinates in the
+rendered page match the Figma @1x layout. If the Figma has significantly more
+vertical spacing, region scores will be inaccurate — rely on the full-page score
+and the diff PNG image instead.
+
+---
+
+## Step 3 — Vision Reads the Diff PNG
+
+Read the diff PNG and ask Vision:
 
 ```
-You are a pixel-perfect UI reviewer. Compare IMAGE 1 (Figma target) vs IMAGE 2 (rendered output).
+This is a pixel diff image comparing a Figma design vs a rendered React page.
+- Grey pixels = identical (good)
+- Yellow pixels = antialiasing differences (ignore)
+- RED pixels = actual differences that need to be fixed
 
-IMAGE 1 — Figma design: {figma_png_path}
-IMAGE 2 — Rendered React: /tmp/rendered-{task_id}.png
-
-PRIORITY CHECKLIST (check these first — known high-risk design choices):
+The Design Agent flagged these high-risk design choices to check first:
 {vision_summary}
 
-For each priority item: explicitly state PASS or FAIL with a reason.
+For every RED region you see:
+1. Which UI component is it in? (e.g. "School Health Index progress bar")
+2. What exactly is different? (shape, color, size, presence/absence)
+3. Which source file likely controls it?
+4. What exact CSS change would fix it?
 
-Then scan the full layout for remaining differences in this order:
-1. Overall dimensions — sidebar width, navbar height, content padding
-2. Component spacing — gap between cards, section margins, padding inside cards
-3. Typography — font size, weight, color for each text element
-4. Colors — exact background, border, text hex values
-5. Border radius — rounded corners (e.g. rounded-lg vs rounded-xl vs rounded-[10px])
-6. Icon sizes and colors
-7. Layout direction — flex row vs col, grid columns
+Output as JSON array:
+[
+  {
+    "component": "SchoolHealthProgressBar",
+    "what_is_wrong": "segments are rounded pills, Figma shows square blocks",
+    "file": "apps/web/src/components/dashboard/DashboardBody.tsx",
+    "fix": "change rounded-full to rounded-[2px] on segment divs"
+  }
+]
 
-OUTPUT FORMAT — return valid JSON:
-{
-  "score": <integer 0-100, where 100 = identical>,
-  "priority_checks": [
-    { "item": "<vision_summary bullet>", "status": "PASS"|"FAIL", "reason": "<one line>" }
-  ],
-  "diffs": [
-    {
-      "component": "<component name>",
-      "property": "<css property>",
-      "figma_value": "<what figma shows>",
-      "rendered_value": "<what the render shows>",
-      "file": "<apps/web/src/...>",
-      "fix": "<exact Tailwind class change, e.g. change h-[56px] to h-[72px]>",
-      "severity": "HIGH"|"MEDIUM"|"LOW"
-    }
-  ]
-}
-
-Rules:
-- score 95-100 = pixel-perfect (acceptable)
-- score 80-94 = close but needs fixes
-- score <80 = significant rework needed
-- Only include diffs that require a code change
-- For `fix`: be EXACT — name the current class and its replacement
-- Ignore text/data content differences (dynamic data is fine)
-- Ignore differences caused by browser font rendering (sub-pixel)
-- If images look the same, return score 100 with empty diffs array
+If there are no red regions (only grey/yellow), return: { "status": "PASSED" }
 ```
 
-Parse the JSON response. If parsing fails, treat score as 0 and request a re-run.
+---
+
+## Step 4 — Apply Fixes
+
+For each fix from Vision:
+
+1. **Read** the file
+2. **Find** the exact code (search for the class or element described)
+3. **Edit** with the specific change
+4. **Verify** the change is in the file
+
+**Scoping rules:**
+- Read the file first — never edit blind
+- Use surrounding context to scope edits when the same class appears multiple times
+- One diff → one Edit call
+- If Vision says "add X" → find the element's className and append
+- If Vision says "change X to Y" → find X in context and replace
 
 ---
 
-## Step 3 — Apply Fixes Directly
+## Step 5 — HMR Wait
 
-For each diff in the list (ordered HIGH → MEDIUM → LOW):
-
-1. **Read** the file at `diff.file`
-2. **Locate** the problematic code — search for the CSS class or property mentioned in `diff.fix`
-3. **Edit** the file with the exact change from `diff.fix`
-4. **Verify** the edit was applied (re-read the changed lines)
-
-**Fix translation rules:**
-
-| Vision says | Edit action |
-|---|---|
-| "change h-[56px] to h-[72px]" | Find `h-\[56px\]` in file, replace with `h-[72px]` |
-| "change gap-4 to gap-6" | Find `gap-4`, replace with `gap-6` in the target component |
-| "change rounded-lg to rounded-[10px]" | Find `rounded-lg`, replace in the specific component context |
-| "change text-sm to text-[13px]" | Find `text-sm` in the specific component, replace |
-| "add border border-[#e3e8ef]" | Find the element's className, append the classes |
-| "change w-[180px] to w-[218px]" | Find the width class, replace |
-
-**Important scoping rules:**
-- Always read the file first — confirm the class exists before editing
-- When a class appears multiple times, use surrounding context (component name, parent className) to scope the edit precisely
-- Make one diff's edit at a time — do not batch multiple diffs into one Edit call
-- If a fix would break existing logic, skip it and note it in the report
-
----
-
-## Step 4 — Wait for HMR
-
-After applying all fixes for this loop:
 ```bash
 sleep 1
 ```
-Vite HMR applies changes in under 1s. The next screenshot will reflect the edits.
 
 ---
 
@@ -157,10 +146,32 @@ Vite HMR applies changes in under 1s. The next screenshot will reflect the edits
 
 | Score | Action |
 |---|---|
-| ≥ 95 | Return PASSED — pixel-perfect achieved |
-| 80–94 | Apply fixes, run next loop |
-| 60–79 | Apply fixes, run next loop. Log "significant rework" warning |
-| < 60 | Apply fixes, run next loop. If still < 60 after loop 2, halt and report |
+| ≥ 98% | PASSED — pixel-perfect |
+| 95–97% | Apply fixes, next loop |
+| 90–94% | Apply fixes, next loop. Log warning |
+| < 90 after loop 2 | Halt, post report, require human |
+
+---
+
+## Known Limitation: Layout Height Mismatch
+
+If the Figma canvas is taller than the rendered page (e.g. Figma=1332px, render content=720px),
+the lower sections will be at different Y coordinates. In this case:
+
+- **Full-page pixelmatch score** will be inflated (empty white space matches white background)
+- **Region scores** for bottom sections will be inaccurate
+- **Diff PNG** will show red from positional overlap between Figma sections and rendered sections
+
+**Detection:** If the rendered screenshot has large empty white areas at the bottom AND diff shows
+red in mid-page areas, this is likely positional mismatch, not actual visual differences.
+
+**Fix strategy:** In this case, crop each component individually using Playwright element screenshots:
+```bash
+# Screenshot a specific element by CSS selector
+python3 agents/shared/playwright_screenshot.py {route} /tmp/comp-{name}.png \
+  --selector ".school-health-card"
+```
+Then compare the cropped component against the equivalent Figma crop.
 
 ---
 
@@ -169,41 +180,25 @@ Vite HMR applies changes in under 1s. The next screenshot will reflect the edits
 ```json
 {
   "status": "PASSED" | "MAX_LOOPS_REACHED" | "HALTED_LOW_SCORE",
-  "final_score": 96,
+  "final_score": 98.4,
   "loops_run": 2,
-  "diffs_found_total": 8,
-  "diffs_remaining": 0,
-  "priority_checks": {
-    "passed": 4,
-    "failed": 0
-  },
-  "figma_png": "/tmp/figma-{task_id}.png",
-  "rendered_png": "/tmp/rendered-{task_id}.png",
+  "diff_pixels_start": 41549,
+  "diff_pixels_end": 3200,
+  "diff_image": "/tmp/diff-{task_id}.png",
   "fixes_applied": [
     {
-      "component": "Navbar",
-      "property": "height",
-      "fix": "h-[56px] → h-[72px]",
-      "file": "apps/web/src/components/dashboard/Navbar.tsx"
+      "component": "SchoolHealthProgressBar",
+      "fix": "rounded-full → rounded-[2px]",
+      "file": "apps/web/src/components/dashboard/DashboardBody.tsx"
     }
   ],
-  "diffs_remaining_list": []
+  "region_scores": {
+    "navbar": 100.0,
+    "sidebar": 99.9,
+    "school_health": 98.1
+  }
 }
 ```
-
----
-
-## Self-Reflection Before Returning PASSED
-
-Before marking score ≥ 95 as PASSED, confirm:
-- [ ] Every `vision_summary` item was explicitly checked (not skipped)
-- [ ] Sidebar width matches Figma px value
-- [ ] Navbar height matches Figma px value
-- [ ] Card border radius matches exactly (not approximated)
-- [ ] Color values are exact hex — not "similar" or "close"
-- [ ] Font sizes and weights match
-- [ ] Spacing between major sections matches
-- [ ] The rendered screenshot was taken AFTER all fixes were applied in this loop
 
 ---
 
@@ -212,9 +207,8 @@ Before marking score ≥ 95 as PASSED, confirm:
 | Error | Action |
 |---|---|
 | Playwright not installed | `pip install playwright && playwright install chromium`, retry once |
-| Dev server not found on any candidate port | Log warning, skip step, add to Checkpoint 1 summary |
-| figma_png_path missing | Skip entire visual diff, log warning |
-| vision_summary missing | Run without priority checklist (full scan only) |
-| Vision returns invalid JSON | Retry the Vision call once with stricter prompt, else treat as score 0 |
-| Edit tool finds no match for a fix | Log "fix not applicable — class not found in file", skip that diff |
-| Score < 60 after loop 2 | Halt, post full diff list to report, require human review |
+| Dev server not found | Log warning, skip visual diff, add to Checkpoint 1 summary |
+| `figma_png_path` missing | Skip, log warning |
+| `pixelmatch.py` fails | Fall back to Vision-only comparison (read both PNGs directly) |
+| Vision returns invalid JSON | Retry once with stricter prompt |
+| Score < 90 after loop 2 | Halt, post diff report + region scores to ClickUp |
