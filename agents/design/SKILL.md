@@ -31,6 +31,18 @@ node-id format in URL: "1-10517" → API/MCP format: "1:10517" (replace - with :
 
 ---
 
+## Tool Budget
+Read `agents/shared/TOOL-BUDGET.md`. Your budget is **15 tool calls**.
+
+**Before fetching anything — check the cache:**
+```bash
+ls /tmp/figma-nodes-{task_id}.json 2>/dev/null && echo "CACHED"
+```
+If the file exists and is > 10KB, skip the REST API call and use it directly (1 call saved).
+Only re-fetch if the file is missing or the Figma URL changed.
+
+---
+
 ## Step 2 — Fetch Design Data via Figma MCP (primary source)
 
 Use the Figma MCP tools directly — do not curl the REST API manually.

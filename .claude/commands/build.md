@@ -5,6 +5,19 @@ argument-hint: CU-{task_id}
 
 You are the **Orchestrator** for Vanta LMS. Execute the full build pipeline for ClickUp task `$ARGUMENTS`.
 
+**Record the run start time immediately:**
+```bash
+RUN_START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+```
+This is passed to the Retrospect Agent at Step 11.
+
+## Tool Budget
+Read `agents/shared/TOOL-BUDGET.md` before starting. Your own budget is **20 tool calls**.
+Key rules:
+- Use `ss -tlnp | grep node` (1 call) to find the dev server port — never curl-poll
+- Check `/tmp/figma_node_{task_id}.json` before spawning Design Agent — if it exists, pass cached data directly
+- Use `Read` tool not `Bash cat` for any file you need to inspect
+
 ## Multi-Model Routing
 Read `agents/shared/multi-model-strategy.md` for full details. Key rules:
 - **Gemini 2.5 Pro** → vision steps only (Design Agent Step 4, Visual Diff Agent Step 3) — called via `python3 agents/shared/gemini.py`
@@ -264,6 +277,24 @@ Spawn a PR Review Agent sub-agent immediately after the PR is created:
   - If changes requested: "PR Review Agent flagged issues ⚠️. Inline comments posted on GitHub. Review them at {pr_url} — you decide whether to fix or merge as-is."
 
 Save WorkOrder with `current_step: 10`, `pr_review: "approved"|"changes_requested"`.
+
+## Step 11 — Retrospect Agent (always runs)
+
+Spawn Retrospect Agent sub-agent:
+- Provide: `task_id`, `run_start_time` (captured at pipeline start), `anti_patterns_from_session` (any inefficiencies you noticed inline during the run)
+- Instruction: read `agents/retrospect/SKILL.md` and `agents/shared/TOOL-BUDGET.md`, then:
+  1. Run `python3 agents/shared/retrospect.py --task-id {task_id} --since {run_start_time}` to analyze the audit log
+  2. For each HIGH/MED anti-pattern found: edit the relevant SKILL.md file to add a concrete prevention rule
+  3. Post a structured efficiency report to ClickUp as a comment
+  4. Return the report JSON
+- Returns: `RetrospectReport { grade, efficiency_score, total_calls, anti_patterns_found, skill_files_patched, estimated_calls_saved_next_run }`
+
+**This step runs regardless of pipeline outcome** — even if earlier steps had errors.
+The goal is continuous improvement: each run should be cheaper than the last.
+
+Save WorkOrder with `current_step: 11`, `retrospect: { grade, efficiency_score }`.
+
+Tell the user: "Retrospect: Grade {grade} ({total_calls} calls / target {target}). {anti_patterns_found} anti-patterns found → SKILL.md files patched to prevent recurrence."
 
 ## On PR Merge (automated — GitHub Actions)
 The workflow `.github/workflows/sync-clickup-on-merge.yml` fires automatically when any PR targeting `main` is merged. No agent action required.

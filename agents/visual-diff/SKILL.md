@@ -12,18 +12,19 @@ the pixelmatch full-page score ≥ 98% or max_loops reached.
 **Run as Claude Opus 4.6 (`claude-opus-4-6`) for best reasoning per fix loop.**
 
 ## Tool Budget
-
-Target: **≤ 30 tool calls** for a typical 2-loop run with 8 fixes.
+Read `agents/shared/TOOL-BUDGET.md`. Target: **≤ 30 tool calls** for a typical 2-loop run.
 
 | Step | Tools | Notes |
 |---|---|---|
 | Read SKILL.md + regions JSON | 2 | One-time |
+| Find dev server port | 1 | `ss -tlnp \| grep node` — **not** curl polling |
 | PRE-LOOP icon audit | 3 | 2 Bash (crops+screenshots) + 1 Gemini |
 | Per loop: screenshot | 1 | |
 | Per loop: pixelmatch | 1 | |
 | Per loop: Gemini diff read | 1 | Inline --prompt, no temp file |
 | Per loop: fixes (8 fixes, 2 files) | ~10 | 2 Reads + 8 Edits |
 | Per loop: sleep | 1 | |
+| Read final rendered PNG (once, at end) | 1 | User display only |
 | **Total for 2 loops** | **~30** | |
 
 **Anti-patterns that inflate tool count (avoid these):**
@@ -32,6 +33,9 @@ Target: **≤ 30 tool calls** for a typical 2-loop run with 8 fixes.
 - Writing prompt to a temp file when `--prompt` fits inline
 - Taking element screenshots proactively — only when Y-mismatch is detected
 - Running 4 separate Gemini calls for icon audit when 1 call handles all sections
+- **Polling for dev server with curl** — use `ss -tlnp | grep node` once (saves 8-10 calls)
+- **Reading rendered PNG mid-loop** to show the user — read it only once, at the very end
+- **Chunked Bash reads of JSON files** — use `Read /tmp/uispec-{id}.json` (1 call, not 3)
 
 ---
 
@@ -138,6 +142,14 @@ Only proceed to the pixel loop once the audit returns [].
 ---
 
 ## Step 1 — Full-Page Screenshot
+
+**Find the dev server port first (1 call, not 10):**
+```bash
+# Get port in one shot — never curl-poll in a loop
+DEV_PORT=$(ss -tlnp | grep node | grep -oP ':\K[0-9]+' | head -1)
+# If empty, the server isn't running — start it and wait once:
+# npx nx serve web > /dev/null 2>&1 & sleep 12 && DEV_PORT=4200
+```
 
 ```bash
 python3 agents/shared/playwright_screenshot.py {route} /tmp/rendered-{task_id}.png 1440 1332
