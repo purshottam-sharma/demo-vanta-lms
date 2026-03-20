@@ -11,6 +11,28 @@ the pixelmatch full-page score ≥ 98% or max_loops reached.
 
 **Run as Claude Opus 4.6 (`claude-opus-4-6`) for best reasoning per fix loop.**
 
+## Tool Budget
+
+Target: **≤ 30 tool calls** for a typical 2-loop run with 8 fixes.
+
+| Step | Tools | Notes |
+|---|---|---|
+| Read SKILL.md + regions JSON | 2 | One-time |
+| PRE-LOOP icon audit | 3 | 2 Bash (crops+screenshots) + 1 Gemini |
+| Per loop: screenshot | 1 | |
+| Per loop: pixelmatch | 1 | |
+| Per loop: Gemini diff read | 1 | Inline --prompt, no temp file |
+| Per loop: fixes (8 fixes, 2 files) | ~10 | 2 Reads + 8 Edits |
+| Per loop: sleep | 1 | |
+| **Total for 2 loops** | **~30** | |
+
+**Anti-patterns that inflate tool count (avoid these):**
+- Re-reading a file you already read this loop
+- Re-reading after an Edit to "verify" — trust the Edit tool
+- Writing prompt to a temp file when `--prompt` fits inline
+- Taking element screenshots proactively — only when Y-mismatch is detected
+- Running 4 separate Gemini calls for icon audit when 1 call handles all sections
+
 ---
 
 ## When to Run
@@ -79,51 +101,39 @@ python3 agents/shared/playwright_screenshot.py {route} /tmp/rendered-icon-status
   --selector "[data-component='status-cards']"
 ```
 
-### Step C — Ask Gemini to compare icon pairs section by section
+### Step C — ONE Gemini call with all section pairs
 
-Write prompt to file then call Gemini with ONE Figma crop + ONE rendered screenshot at a time.
-Comparing section-by-section is more accurate than giving Gemini all images at once.
+Pass all Figma crops and rendered screenshots in a single Gemini call.
+Order: figma-sidebar, rendered-sidebar, figma-quick-actions, rendered-quick-actions,
+figma-stat-cards, rendered-stat-cards, figma-status-cards, rendered-status-cards.
 
 ```bash
-cat > /tmp/icon-prompt.txt << 'PROMPT'
-Compare these two images of the SAME UI section. First is Figma (ground truth), second is rendered React.
-
-Look at every icon in every card/row carefully. Compare shape, symbol, and style.
-List ONLY mismatches (icons that look different between the two images).
-
-For each mismatch output:
-{
-  "label": "card or nav item label",
-  "figma_icon": "exact shape description (e.g. lightning bolt, envelope, graduation cap on person)",
-  "rendered_icon": "exact shape description",
-  "lucide_fix": "LucideIconName"
-}
-
-Return JSON array. Return [] if all icons match.
-PROMPT
-
-# Run for each section pair
-python3 agents/shared/gemini.py --prompt-file /tmp/icon-prompt.txt \
-  --image /tmp/figma-icon-sidebar.png --image /tmp/rendered-icon-sidebar.png \
-  --json > /tmp/icon-audit-sidebar.json
-
-python3 agents/shared/gemini.py --prompt-file /tmp/icon-prompt.txt \
-  --image /tmp/figma-icon-quick-actions.png --image /tmp/rendered-icon-quick-actions.png \
-  --json > /tmp/icon-audit-quick-actions.json
-
-# ... repeat for each section
+python3 agents/shared/gemini.py \
+  --prompt "Images are pairs: (1,2)=sidebar, (3,4)=quick-actions, (5,6)=stat-cards, (7,8)=status-cards. Odd=Figma, Even=Rendered. List ONLY icon mismatches across all sections. For each: {\"section\",\"label\",\"figma_icon\",\"rendered_icon\",\"lucide_fix\"}. Return JSON array, [] if none." \
+  --image /tmp/figma-icon-sidebar.png \
+  --image /tmp/rendered-icon-sidebar.png \
+  --image /tmp/figma-icon-quick-actions.png \
+  --image /tmp/rendered-icon-quick-actions.png \
+  --image /tmp/figma-icon-stat-cards.png \
+  --image /tmp/rendered-icon-stat-cards.png \
+  --image /tmp/figma-icon-status-cards.png \
+  --image /tmp/rendered-icon-status-cards.png \
+  --json > /tmp/icon-audit.json
 ```
 
+**1 Gemini call total** (not 4 separate calls).
+
 ### Step D — Apply icon fixes
-For each mismatch found: update the icon import and assignment in the source file.
+For each mismatch: update the import and assignment in the source file.
+**Read each source file ONCE, apply ALL its icon fixes, then move to the next file.**
 Verify the lucide icon name exists before applying:
 ```bash
 node -e "const l=require('./node_modules/lucide-react'); console.log(!!l.{IconName})"
 ```
 
-### Step E — Confirm fixes with a second Gemini pass
-Re-screenshot and re-compare the fixed sections. Only proceed to the pixel loop once
-all icon audits return [].
+### Step E — Confirm with ONE re-screenshot + ONE Gemini call
+Take one combined screenshot of all sections and run a single Gemini comparison.
+Only proceed to the pixel loop once the audit returns [].
 
 ---
 
@@ -215,54 +225,17 @@ and the diff PNG image instead.
 **Use Gemini 2.5 Pro for this step** — superior at identifying specific pixel differences
 in diff images compared to Claude Vision.
 
-Write the prompt and call Gemini:
+Call Gemini with `--prompt` inline — **no temp file needed**:
 
 ```bash
-cat > /tmp/diff-prompt-{task_id}.txt << PROMPT
-This is a pixel diff image comparing a Figma design vs a rendered React page.
-- Grey pixels = identical (good)
-- Yellow pixels = antialiasing differences (ignore)
-- RED pixels = actual differences that need to be fixed
-
-The Design Agent flagged these high-risk design choices to check first:
-{vision_summary}
-
-For every RED region you see:
-1. Which UI component is it in? (e.g. "School Health Index progress bar")
-2. What exactly is different? (shape, color, size, presence/absence)
-3. Which source file likely controls it?
-4. What exact CSS change would fix it?
-
-If you are uncertain about exact values (px, hex colors), say so — set needs_figma_lookup: true.
-
-Output as a JSON array only (no markdown, no explanation):
-[
-  {
-    "component": "SchoolHealthProgressBar",
-    "what_is_wrong": "segments are rounded pills, Figma shows square blocks",
-    "file": "apps/web/src/components/dashboard/DashboardBody.tsx",
-    "fix": "change rounded-full to rounded-[2px] on segment divs",
-    "needs_figma_lookup": false
-  },
-  {
-    "component": "UserDistributionChart",
-    "what_is_wrong": "Y-axis labels missing, bar colors uncertain",
-    "file": "apps/web/src/components/dashboard/DashboardBody.tsx",
-    "fix": "add Y-axis labels; verify bar colors",
-    "needs_figma_lookup": true,
-    "figma_node_name": "User Distribution"
-  }
-]
-
-If there are no red regions (only grey/yellow), return: { "status": "PASSED" }
-PROMPT
-
 python3 agents/shared/gemini.py \
-  --prompt-file /tmp/diff-prompt-{task_id}.txt \
+  --prompt "Pixel diff image: grey=same, yellow=antialiasing(ignore), red=wrong. For every RED region: {\"component\",\"what_is_wrong\",\"file\",\"fix\",\"needs_figma_lookup\"}. Files are in apps/web/src/. Return JSON array. If no red regions: {\"status\":\"PASSED\"}" \
   --image /tmp/diff-{task_id}.png \
   --json \
   > /tmp/diff-analysis-{task_id}.json
 ```
+
+**1 Bash call total** (no cat to write prompt file first).
 
 Parse `/tmp/diff-analysis-{task_id}.json`. If it contains `{ "status": "PASSED" }` → exit loop with PASSED.
 
@@ -293,22 +266,31 @@ Use these authoritative values in your fix instead of Vision's guess.
 
 ---
 
-## Step 5 — Apply Fixes
+## Step 5 — Apply Fixes (tool-efficient)
 
-For each fix from Vision (enriched with Figma lookup data where needed):
+**Group fixes by file first. Read each file ONCE. Apply all its fixes. Move on.**
+Never re-read a file you already read in this loop. Never re-read after an Edit to verify.
 
-1. **Read** the file
-2. **Find** the exact code (search for the class or element described)
-3. **Edit** with the specific change
-4. **Verify** the change is in the file
+```
+GROUP fixes by file:
+  file_a: [fix1, fix2, fix3]
+  file_b: [fix4]
 
-**Scoping rules:**
-- Read the file first — never edit blind
+FOR each file_group:
+  Read file ONCE                        ← 1 Read tool call total per file
+  FOR each fix in group:
+    Edit with specific change            ← 1 Edit per fix, no re-read after
+  DONE — move to next file
+```
+
+**Rules:**
+- Read each file exactly once per loop — not once per fix
+- **Never re-read a file after an Edit to verify** — trust the Edit tool
 - Use surrounding context to scope edits when the same class appears multiple times
-- One diff → one Edit call
-- If Vision says "add X" → find the element's className and append
-- If Vision says "change X to Y" → find X in context and replace
+- One fix → one Edit call
 - If Figma lookup gives a hex color → use that exact value, not a Tailwind approximation
+
+**Target: ≤ 2 tool calls per fix** (1 Read amortized across fixes in same file + 1 Edit)
 
 ---
 
