@@ -26,7 +26,7 @@ function QuickActionsSection() {
   ];
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-0.5">
         <h2 className="text-base font-semibold text-[#202939]">Quick Actions</h2>
         <p className="text-[13px] text-[#697586]">Frequently used administrative functions</p>
@@ -35,13 +35,13 @@ function QuickActionsSection() {
         {actions.map(({ label, icon: Icon, iconBg, iconColor }) => (
           <button
             key={label}
-            className="flex flex-row items-center gap-3 h-[72px] px-4 rounded-[10px] bg-white border border-[#e3e8ef] hover:border-[#a38654] hover:shadow-sm transition-all cursor-pointer"
+            className="flex flex-row items-center gap-3 h-[80px] px-4 rounded-[10px] bg-white border border-[#e3e8ef] hover:border-[#a38654] hover:shadow-sm transition-all cursor-pointer"
           >
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: iconBg }}
             >
-              <Icon className="h-5 w-5 flex-shrink-0" style={{ color: iconColor }} />
+              <Icon className="h-4 w-4 flex-shrink-0" style={{ color: iconColor }} />
             </div>
             <span className="text-[14px] font-medium text-[#202939] text-left">{label}</span>
           </button>
@@ -140,7 +140,7 @@ function HealthAndInsightsRow() {
   return (
     <div className="grid gap-3" style={{ gridTemplateColumns: '3fr 2fr' }}>
       {/* School Health Index */}
-      <div className="p-5 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      <div className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-[#f0fdf4] flex items-center justify-center">
@@ -161,7 +161,7 @@ function HealthAndInsightsRow() {
         </div>
 
         {/* Segmented progress bar — ~20 discrete pill segments */}
-        <div className="flex gap-[2px] w-full h-4" role="progressbar" aria-valuenow={82} aria-valuemin={0} aria-valuemax={100}>
+        <div className="flex gap-[2px] w-full h-3" role="progressbar" aria-valuenow={82} aria-valuemin={0} aria-valuemax={100}>
           {Array.from({ length: totalSegments }).map((_, i) => (
             <div
               key={i}
@@ -187,7 +187,7 @@ function HealthAndInsightsRow() {
       </div>
 
       {/* Intelligence Insights */}
-      <div className="p-5 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      <div className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-[#faf5ff] flex items-center justify-center">
@@ -324,7 +324,7 @@ function BottomPanelsRow() {
   return (
     <div className="grid gap-3" style={{ gridTemplateColumns: '3fr 2fr' }}>
       {/* Absentees Alerts Panel */}
-      <div className="p-5 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      <div className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="text-[15px] font-semibold text-[#202939]">Absentees Alerts</span>
           <button className="text-[13px] font-medium text-[#a38654] cursor-pointer hover:underline">
@@ -368,7 +368,7 @@ function BottomPanelsRow() {
       </div>
 
       {/* User Distribution by Role Panel */}
-      <div className="p-5 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      <div className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="text-[15px] font-semibold text-[#202939]">User Distribution by Role</span>
           <button className="text-[13px] font-medium text-[#a38654] cursor-pointer hover:underline">
@@ -416,7 +416,7 @@ function BottomPanelsRow() {
 export default function DashboardBody() {
   return (
     <main className="flex-1 overflow-y-auto bg-[#f8fafc]">
-      <div className="p-6 flex flex-col gap-5">
+      <div className="p-6 flex flex-col gap-4">
         {/* Section 1: Quick Actions */}
         <QuickActionsSection />
 
