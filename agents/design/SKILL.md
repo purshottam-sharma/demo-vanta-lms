@@ -2,147 +2,214 @@
 
 ## Role
 Convert a Figma frame into an enriched UISpec that the Frontend Agent can implement
-pixel-perfectly on the first pass — without needing multiple Visual Diff correction cycles.
+pixel-perfectly on the first pass — without needing Visual Diff correction cycles.
 
-The Design Agent combines two sources of truth:
-- **Figma JSON** — exact measurements (px, hex, font weight, border radius)
-- **Claude Vision** — visual intent (layout direction, hierarchy, proportions, design choices a developer would miss from numbers alone)
+**Three sources of truth, in priority order:**
+1. **Figma MCP structured data** — exact measurements, design token names, Auto Layout constraints (primary — never approximate these)
+2. **Figma variables + styles** — token names for colors and typography (use names, not hex values)
+3. **Gemini Vision** — visual intent only: layout feel, hierarchy, non-obvious design choices a developer would miss from numbers alone (supplementary — never use for measuring px/colors)
 
-Both are required. Numbers without visual context produce the wrong layout.
-Visual context without numbers produces approximate styling.
+Pixel-perfect output requires structured data first. Vision is for the "why", not the "what".
 
 ---
 
 ## Inputs
 - `figma_url` — Figma file URL with node-id (e.g. `https://www.figma.com/file/ABC?node-id=1-10517`)
-- `task_title` — used to scope the analysis
+- `task_id`
+- `task_title`
 - `acceptance_criteria` — UI-relevant criteria only
 
 ---
 
 ## Step 1 — Parse Figma URL
 
-Extract `file_id` and `node_id` from the URL:
+Extract `file_key` and `node_id` from the URL:
 ```
-https://www.figma.com/file/{file_id}?node-id={node_id}
-node-id format: "1-10517" → API format: "1:10517"
-```
-
-Read `FIGMA_FILE_ID` and `FIGMA_API_TOKEN` from `.env` if not provided:
-```bash
-source .env
+https://www.figma.com/file/{file_key}?node-id={node_id}
+node-id format in URL: "1-10517" → API/MCP format: "1:10517" (replace - with :)
 ```
 
 ---
 
-## Step 2 — Fetch Figma Node JSON
+## Step 2 — Fetch Design Data via Figma MCP (primary source)
 
-Fetch the node tree at depth 8 to capture all nested components:
-```bash
-curl -s "https://api.figma.com/v1/files/$FIGMA_FILE_ID/nodes?ids={node_id}&depth=8" \
-  -H "X-Figma-Token: $FIGMA_API_TOKEN" \
-  > /tmp/figma-nodes-{task_id}.json
-```
+Use the Figma MCP tools directly — do not curl the REST API manually.
+
+**2a. Node tree (exact measurements):**
+Call `get_file_nodes` with `file_key` and `node_id`.
 
 Extract for every component:
-- `absoluteBoundingBox` — x, y, width, height
-- `paddingLeft/Right/Top/Bottom`
-- `itemSpacing` (gap)
-- `fills` → background color (hex)
-- `strokes` → border color + width
-- `cornerRadius` / `rectangleCornerRadii`
-- `style.fontFamily`, `style.fontSize`, `style.fontWeight`, `style.letterSpacing`
-- `layoutMode` — HORIZONTAL or VERTICAL (auto-layout direction)
-- `primaryAxisAlignItems`, `counterAxisAlignItems` (flex alignment)
-- `characters` — text content
+- `absoluteBoundingBox` → width, height (exact px)
+- `paddingLeft/Right/Top/Bottom` → exact padding
+- `itemSpacing` → gap between children
+- `fills[].color` → background color (RGBA → hex)
+- `strokes[].color` + `strokeWeight` → border
+- `cornerRadius` / `rectangleCornerRadii` → border-radius
+- `style.fontFamily`, `style.fontSize`, `style.fontWeight`, `style.lineHeightPx`
+- `layoutMode` → HORIZONTAL or VERTICAL (Auto Layout direction)
+- `primaryAxisAlignItems` → main-axis alignment
+- `counterAxisAlignItems` → cross-axis alignment
+- `primaryAxisSizingMode` → FIXED or HUG (determines if width/height is explicit or auto)
+- `counterAxisSizingMode` → FIXED or HUG
+- `characters` → text content
+- `opacity` → if < 1, apply as Tailwind opacity
+
+**2b. Design tokens:**
+Call `list_variables_for_file` with `file_key`.
+
+Map each variable to its resolved value AND its variable name. When a fill or style
+references a variable, use the variable name in UISpec, not the raw hex.
+
+Example output:
+```json
+{
+  "color/primary/500": "#3b82f6",
+  "color/text/primary": "#202939",
+  "spacing/4": "16px"
+}
+```
+
+**2c. Named styles:**
+Call `list_styles_in_file` with `file_key`.
+
+Extract color styles (named palette) and text styles (named typography scale):
+```json
+{
+  "styles": {
+    "colors": { "Brand/Red": "#fe0123", "Text/Primary": "#202939" },
+    "text": { "Heading/H1": { "size": 32, "weight": 600 }, "Body/SM": { "size": 14, "weight": 400 } }
+  }
+}
+```
+
+**Fallback:** If MCP tools are unavailable, fall back to REST API:
+```bash
+source .env
+curl -s "https://api.figma.com/v1/files/$FIGMA_FILE_ID/nodes?ids={node_id}&depth=8" \
+  -H "X-Figma-Token: $FIGMA_API_TOKEN" > /tmp/figma-nodes-{task_id}.json
+curl -s "https://api.figma.com/v1/files/$FIGMA_FILE_ID/variables/local" \
+  -H "X-Figma-Token: $FIGMA_API_TOKEN" > /tmp/figma-variables-{task_id}.json
+```
 
 ---
 
-## Step 3 — Download Figma Frame as PNG
+## Step 3 — Map Auto Layout → Tailwind (systematic)
+
+This is the core of pixel accuracy. Do not guess — use this mapping table:
+
+**Layout direction:**
+| Figma `layoutMode` | Tailwind |
+|---|---|
+| `HORIZONTAL` | `flex flex-row` |
+| `VERTICAL` | `flex flex-col` |
+| `NONE` | (no flex — fixed positioning) |
+
+**Alignment:**
+| Figma `primaryAxisAlignItems` | Tailwind (flex-row) | Tailwind (flex-col) |
+|---|---|---|
+| `MIN` | `justify-start` | `items-start` |
+| `CENTER` | `justify-center` | `items-center` |
+| `MAX` | `justify-end` | `items-end` |
+| `SPACE_BETWEEN` | `justify-between` | — |
+
+| Figma `counterAxisAlignItems` | Tailwind (flex-row) | Tailwind (flex-col) |
+|---|---|---|
+| `MIN` | `items-start` | `justify-start` |
+| `CENTER` | `items-center` | `justify-center` |
+| `MAX` | `items-end` | `justify-end` |
+
+**Sizing:**
+| `primaryAxisSizingMode` | Meaning |
+|---|---|
+| `FIXED` | explicit width (flex-row) or height (flex-col) |
+| `HUG` | `w-fit` or `h-fit` — shrinks to content |
+| `FILL` | `flex-1` — fills available space |
+
+**Spacing (itemSpacing → gap):**
+Use exact px values as Tailwind arbitrary: `gap-[{itemSpacing}px]` unless it maps cleanly
+to a standard step (4→1, 8→2, 12→3, 16→4, 20→5, 24→6, 32→8, 40→10, 48→12).
+
+**Padding:** Same rule — exact px as `p-[{n}px]` or `px-[{n}px] py-[{n}px]` for asymmetric.
+
+**Corner radius:**
+| Figma `cornerRadius` | Tailwind |
+|---|---|
+| 4 | `rounded` |
+| 6 | `rounded-md` |
+| 8 | `rounded-lg` |
+| 12 | `rounded-xl` |
+| 16 | `rounded-2xl` |
+| 9999 or ≥ width/2 | `rounded-full` |
+| other | `rounded-[{n}px]` |
+
+---
+
+## Step 4 — Download PNG (visual cross-check only)
 
 ```bash
+source .env
 IMAGE_URL=$(curl -s \
   "https://api.figma.com/v1/images/$FIGMA_FILE_ID?ids={node_id}&format=png&scale=2" \
   -H "X-Figma-Token: $FIGMA_API_TOKEN" \
   | python3 -c "import sys,json; d=json.load(sys.stdin); print(list(d['images'].values())[0])")
-
 curl -sL "$IMAGE_URL" -o /tmp/figma-{task_id}.png
 ```
 
-If export fails, log a warning and continue — JSON data is sufficient for measurements.
+The PNG is used only for Gemini Vision in Step 5. All measurements come from Step 2.
 
 ---
 
-## Step 4 — Vision Analysis (Gemini 2.5 Pro)
+## Step 5 — Gemini Vision (visual intent only)
 
-**Use Gemini for this step** — it produces better image understanding than Claude Vision
-for design frames with dense layout information.
-
-Write the prompt to a temp file, then call Gemini:
+Call Gemini on the PNG. Ask ONLY about things that cannot be extracted from structured data:
 
 ```bash
-cat > /tmp/vision-prompt-{task_id}.txt << 'PROMPT'
-You are a senior UI engineer analysing a Figma design frame to extract implementation
-instructions for a React + Tailwind developer.
-
-Look at this design carefully. For each major component or section, describe:
-
-1. LAYOUT DIRECTION
-   - Is the primary axis horizontal or vertical?
-   - Is it a flex row, flex col, or grid?
-   - Example: "Quick action cards: flex row, 4 columns, equal width"
-
-2. VISUAL HIERARCHY
-   - What is visually dominant (large, bold, prominent)?
-   - What is secondary (smaller, muted, supporting)?
-   - Example: "Stat card: value (32px bold) dominates over label (12px muted) above it"
-
-3. SPACING FEEL
-   - Are sections tightly packed or generously spaced?
-   - Do elements have visible breathing room or are they dense?
-
-4. NON-OBVIOUS DESIGN CHOICES
-   - Things a developer would get wrong from numbers alone
-   - Example: "The notification icon has a red dot badge in the top-right corner"
-   - Example: "The profile area is a pill-shaped container, not just an avatar + text"
-   - Example: "The sidebar footer is a full-width button, not just text with an icon"
-
-5. INTERACTION HINTS
-   - Hover states visible in the design
-   - Active/selected states
-   - Any visual affordances (chevrons, arrows, badges)
-
-6. COMPONENT INVENTORY
-   List every distinct UI component visible, left-to-right, top-to-bottom.
-
-Be specific and concrete. Avoid vague terms like "clean" or "modern".
-A developer reading your output should be able to implement this without seeing the image.
-PROMPT
-
 python3 agents/shared/gemini.py \
-  --prompt-file /tmp/vision-prompt-{task_id}.txt \
+  --prompt "You are reviewing a Figma design. All measurements (px, hex colors, font sizes) are already known from the Figma API. Do NOT describe any numbers. Focus ONLY on:
+
+1. VISUAL HIERARCHY — what is visually dominant vs secondary? What draws the eye first?
+2. NON-OBVIOUS DESIGN CHOICES — things a developer would get wrong from numbers alone:
+   - Unexpected shapes (e.g. 'profile area is a pill container, not loose avatar+text')
+   - Layering or overlap (e.g. 'badge is absolute-positioned over icon top-right')
+   - Visual grouping that is not obvious from the layout (e.g. '3 cards are visually grouped by a shared background')
+   - Icon style (e.g. 'all icons are outline style, not filled')
+3. INTERACTION HINTS — hover states, active states, visual affordances visible in the design
+4. COMPONENT INVENTORY — list every distinct UI component visible left-to-right, top-to-bottom
+
+Be specific. No vague terms. No numbers — those come from the API.
+Output as plain text, one section per heading." \
   --image /tmp/figma-{task_id}.png \
   > /tmp/vision-analysis-{task_id}.txt
 ```
 
-Read `/tmp/vision-analysis-{task_id}.txt` and store as `vision_analysis` in the UISpec.
-
-**Fallback:** If `gemini.py` fails (API key missing, network error), fall back to reading
-the PNG directly with Claude Vision using the same prompt. Log the fallback.
+**Fallback:** If `gemini.py` fails, read the PNG directly with Claude Vision using the same prompt.
 
 ---
 
-## Step 5 — Build Enriched UISpec
+## Step 6 — Build Enriched UISpec
 
-Merge JSON measurements + Vision analysis into a single UISpec JSON.
+Merge structured MCP data (primary) + design tokens + Gemini visual notes into UISpec JSON.
 
-Structure:
+**Rules:**
+- Every `width`, `height`, `padding`, `gap`, `fontSize`, `fontWeight`, `color` value MUST come from Step 2 MCP data — never from Vision
+- Every color that has a variable/style name MUST use the name (e.g. `"color": "var(--color-text-primary)"`) alongside the resolved hex
+- Vision notes go in `vision_note` fields only — they describe intent, not measurements
+- Map Auto Layout using the table in Step 3 — never guess flex direction from the PNG
+
 ```json
 {
   "frame": {
     "width": 1440,
     "height": 900,
-    "background": "#f8fafc"
+    "background": "#f8fafc",
+    "background_token": "color/bg/page"
+  },
+  "design_tokens": {
+    "color/text/primary": "#202939",
+    "color/text/secondary": "#697586",
+    "color/border/default": "#e2e8f0",
+    "color/bg/page": "#f8fafc",
+    "color/bg/card": "#ffffff"
   },
   "components": [
     {
@@ -150,141 +217,64 @@ Structure:
       "width": 236,
       "height": "100vh",
       "background": "#ffffff",
+      "background_token": "color/bg/card",
       "border_right": "1px solid #e2e8f0",
-      "layout": "flex col",
-      "vision_note": "3 clear zones: logo header (72px, border-bottom), scrollable nav list, pinned footer button",
+      "layout": "flex flex-col",
+      "source": "MCP:get_file_nodes",
+      "vision_note": "3 clear zones: logo header, scrollable nav list, pinned footer. Sidebar feels substantial, not floating.",
       "children": [
-        {
-          "name": "SidebarHeader",
-          "height": 72,
-          "padding": "0 16px",
-          "layout": "flex row, items-center, justify-between",
-          "vision_note": "Logo mark (red 32px square with V) + wordmark, close X on mobile only"
-        },
-        {
-          "name": "SidebarSearch",
-          "height": 40,
-          "border_radius": 12,
-          "background": "#f9f8f5",
-          "border": "1px solid #e2e8f0",
-          "layout": "flex row, items-center, gap 8px",
-          "vision_note": "Search icon left, placeholder text, tags row below (pill chips)"
-        },
         {
           "name": "NavItem",
           "height": 40,
-          "padding": "0 12px",
+          "padding": "px-3",
           "border_radius": 8,
+          "layout": "flex flex-row items-center gap-2",
           "font_size": 14,
           "font_weight": 500,
           "active_bg": "#f8fafc",
           "active_border": "1px solid #e3e8ef",
           "active_color": "#a38654",
           "inactive_color": "#697586",
-          "vision_note": "Icon (16px) left of label, full-width, active state has visible border"
-        },
-        {
-          "name": "SidebarFooter",
-          "height": 40,
-          "padding": "0 12px",
-          "border_top": "1px solid #e2e8f0",
-          "vision_note": "Full-width button with Settings icon + Settings label — NOT just text"
-        }
-      ]
-    },
-    {
-      "name": "Navbar",
-      "height": 72,
-      "background": "#ffffff",
-      "border_bottom": "1px solid #e2e8f0",
-      "layout": "flex row, items-center, px-24",
-      "vision_note": "Search bar fills left space (max 360px). Right side: notification button (48x48 square pill) + profile pill (218x48). Both have bg #f8fafc with border.",
-      "children": [
-        {
-          "name": "NavbarSearch",
-          "width": 360,
-          "height": 48,
-          "border_radius": 12,
-          "background": "#f9f8f5",
-          "border": "1px solid #e2e8f0",
-          "vision_note": "Search icon + placeholder. Full input, not icon-only button."
-        },
-        {
-          "name": "NotificationButton",
-          "width": 48,
-          "height": 48,
-          "border_radius": 12,
-          "background": "#f8fafc",
-          "border": "1px solid #e2e8f0",
-          "vision_note": "Bell icon centered. Red dot badge top-right corner (8px, absolute positioned)."
-        },
-        {
-          "name": "ProfilePill",
-          "width": 218,
-          "height": 48,
-          "border_radius": 12,
-          "background": "#f8fafc",
-          "border": "1px solid #e2e8f0",
-          "padding": "0 8px",
-          "gap": 8,
-          "vision_note": "Avatar (32px circle) + name/email stack + ChevronDown icon. It is a PILL CONTAINER, not loose elements."
+          "source": "MCP:get_file_nodes",
+          "vision_note": "Icon left of label, full-width hit area. Active state border is subtle but present."
         }
       ]
     }
   ],
   "typography": {
-    "stat_value": { "size": 32, "weight": 600, "color": "#202939" },
-    "card_label": { "size": 14, "weight": 500, "color": "#697586" },
-    "nav_item": { "size": 14, "weight": 500 },
-    "body": { "size": 14, "weight": 400, "color": "#697586" },
-    "font_family": "Inter"
+    "source": "MCP:list_styles_in_file",
+    "stat_value": { "size": 32, "weight": 600, "color": "#202939", "token": "Heading/H1" },
+    "card_label": { "size": 14, "weight": 500, "color": "#697586", "token": "Body/MD/Medium" }
   },
-  "color_tokens": {
-    "text_primary": "#202939",
-    "text_secondary": "#697586",
-    "border": "#e2e8f0",
-    "bg_page": "#f8fafc",
-    "bg_card": "#ffffff",
-    "bg_input": "#f9f8f5",
-    "accent": "#a38654",
-    "brand_red": "#fe0123",
-    "success": "#2fc475",
-    "warning": "#a38654",
-    "danger": "#e37a72",
-    "info": "#0ba5ec",
-    "purple": "#9b8afb"
-  },
-  "vision_analysis": "<raw Vision output here>"
+  "vision_analysis": "<raw Gemini output from Step 5>"
 }
 ```
 
+The `"source": "MCP:..."` field makes it clear which values are authoritative vs inferred.
+
 ---
 
-## Step 6 — Self-Reflection
+## Step 7 — Self-Reflection
 
 Before returning the UISpec, verify:
-- [ ] Every component from the Vision inventory appears in `components`
-- [ ] Every `vision_note` calls out something a developer would miss from numbers alone
-- [ ] Color tokens are exact hex values from Figma JSON, not approximations
-- [ ] Layout directions (HORIZONTAL/VERTICAL) from Figma JSON match Vision observations
-- [ ] Typography sizes and weights are exact from Figma JSON
-- [ ] No component is listed with generic values — every field is Figma-sourced
+- [ ] Every numeric value (px, hex) has `"source": "MCP:..."` — zero guesses from Vision
+- [ ] Every color that maps to a design token has both `color` (hex) and `color_token` (name)
+- [ ] Every Auto Layout direction is from `layoutMode` in Step 2, confirmed by Vision note
+- [ ] Every `vision_note` describes something NOT in the numbers (visual intent, grouping, style)
+- [ ] No component has only generic Tailwind guesses — every field is MCP-sourced
 
-If any component has only generic Tailwind guesses (not Figma-sourced values), revisit the JSON and re-extract.
+If any value is Vision-inferred rather than MCP-sourced → go back to Step 2 and extract it.
 
 ---
 
 ## Output
 
 Return:
-1. `UISpec JSON` — the enriched spec (save to `/tmp/uispec-{task_id}.json`)
-2. `figma_png_path` — `/tmp/figma-{task_id}.png` (for Visual Diff Agent to reuse)
-3. `vision_summary` — 5-10 bullet points of the most important non-obvious design
-   choices the Frontend Agent must not miss. Each bullet must be specific enough
-   that the Visual Diff Agent can check it with a binary PASS/FAIL:
+1. `UISpec JSON` — save to `/tmp/uispec-{task_id}.json`
+2. `figma_png_path` — `/tmp/figma-{task_id}.png`
+3. `vision_summary` — 5-10 bullet points of non-obvious design choices for the Visual Diff Agent.
+   Each bullet must be PASS/FAIL testable and include the MCP-sourced value:
    - BAD: "Cards have clean spacing"
-   - GOOD: "Stat cards: 4-column grid, gap-4 (16px), card padding p-4 (16px), value text-[32px] font-semibold"
-   - BAD: "Sidebar looks clean"
-   - GOOD: "Sidebar: width 236px, nav item height h-9 (36px), active state bg-[#f8f6f0] with border border-[#e3e8ef]"
-
-The Orchestrator passes all three to the Frontend Agent AND to the Visual Diff Agent.
+   - GOOD: "Stat cards: 4-col grid gap-4 (16px from MCP), padding p-4, value text-[32px] font-semibold"
+   - BAD: "Sidebar nav items look active"
+   - GOOD: "Active nav item: bg-[#f8fafc] border border-[#e3e8ef] text-[#a38654] — from MCP fills"

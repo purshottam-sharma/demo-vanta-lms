@@ -1,24 +1,49 @@
 # Multi-Model Orchestration Strategy
 
-Vanta LMS uses multiple AI models in the same pipeline, routing each step to the
-model best suited for it.
+Vanta LMS uses multiple AI models and data sources in the same pipeline, routing
+each step to the best tool for it.
+
+## Data Source Priority (Design Agent)
+
+```
+1. Figma MCP structured data  → exact px, hex, Auto Layout constraints  ← PRIMARY
+2. Figma variables/styles      → design token names                      ← PRIMARY
+3. Gemini Vision (PNG)         → visual intent, non-obvious choices      ← SUPPLEMENTARY ONLY
+```
+
+Never use Vision to measure px values or colors — that's what causes Visual Diff loops.
 
 ## Model Assignments
 
 | Agent / Step | Model | Reason |
 |---|---|---|
 | PM Agent | Claude Sonnet 4.6 | Task analysis, ClickUp tool use |
-| Design Agent — Figma JSON extraction | Claude Sonnet 4.6 | Structured data parsing |
-| **Design Agent — Step 4: Vision analysis** | **Gemini 2.5 Pro** | Better image understanding for dense UI frames |
+| Design Agent — Steps 2+3: MCP data + tokens | Claude Sonnet 4.6 | Structured data via Figma MCP tools |
+| **Design Agent — Step 5: Vision analysis** | **Gemini 2.5 Flash** | Visual intent only (not measurements) |
 | Backend Agent | Claude Sonnet 4.6 | FastAPI + SQL code gen |
 | Frontend Agent | Claude Sonnet 4.6 | React + Tailwind code gen, file editing |
 | Reflector Agent | Claude Sonnet 4.6 | Contract verification |
 | Testing Agent | Claude Sonnet 4.6 | pytest + vitest + Playwright test writing |
 | **Visual Diff Agent — loop runner** | **Claude Opus 4.6** | Deep reasoning across multi-turn fix loops |
-| **Visual Diff Agent — Step 3: diff PNG reading** | **Gemini 2.5 Pro** | Best-in-class pixel diff interpretation |
+| **Visual Diff Agent — Step 3: diff PNG reading** | **Gemini 2.5 Flash** | Pixel diff interpretation |
 | Review Agent | Claude Sonnet 4.6 | Code review scoring |
 | GitHub Agent | Claude Sonnet 4.6 | Branch + commit + PR via GitHub MCP |
 | Orchestrator | Claude Sonnet 4.6 | Pipeline coordination, checkpoint decisions |
+
+## Figma MCP Tools Used
+
+| MCP Tool | Used In | What It Returns |
+|---|---|---|
+| `get_file_nodes` | Design Agent Step 2a | Full node tree — exact px, colors, Auto Layout |
+| `list_variables_for_file` | Design Agent Step 2b | Design token names + resolved values |
+| `list_styles_in_file` | Design Agent Step 2c | Named color + typography styles |
+| `list_components` | Design Agent (optional) | Component inventory |
+
+**Why not `get_design_context`?** That tool is from the official Figma Dev Mode MCP server
+(requires Figma desktop app). The `figma-mcp-server` npm package wraps the REST API instead.
+When the official Figma desktop MCP becomes available in this environment, switch to it —
+`get_design_context` returns a pre-processed React+Tailwind representation that eliminates
+the manual Auto Layout → Tailwind mapping step entirely.
 
 ## Routing Rules
 
@@ -62,7 +87,7 @@ See `agents/shared/gemini.py` for full usage.
 ```env
 # .env
 GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-2.5-pro-preview   # override to pin a specific version
+GEMINI_MODEL=gemini-2.5-flash   # confirmed working on free tier
 ```
 
 ## Fallback Behavior
