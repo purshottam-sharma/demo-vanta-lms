@@ -137,13 +137,13 @@ function HealthAndInsightsRow() {
           </div>
         </div>
 
-        {/* 40 discrete segments: 8x12px each, gap-[6px], 31 green + 9 gold */}
+        {/* 40 discrete segments: 7.5x12px each (15x24 @2x Figma), gap-[6px], 31 green + 9 inactive #f4f0eb */}
         <div className="flex gap-[6px]" role="progressbar" aria-valuenow={82} aria-valuemin={0} aria-valuemax={100}>
           {Array.from({ length: TOTAL_SEGMENTS }).map((_, i) => (
             <div
               key={i}
-              className="w-[8px] h-[12px] rounded-[2px] flex-shrink-0"
-              style={{ backgroundColor: i < GREEN_SEGMENTS ? '#2fc475' : '#a38654' }}
+              className="h-[12px] rounded-[2px] flex-shrink-0"
+              style={{ width: '7.5px', backgroundColor: i < GREEN_SEGMENTS ? '#2fc475' : '#f4f0eb' }}
             />
           ))}
         </div>
