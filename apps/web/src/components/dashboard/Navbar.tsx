@@ -18,7 +18,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
     : null;
 
   return (
-    <header className="h-[56px] flex items-center px-6 bg-white border-b border-[#e3e8ef] flex-shrink-0 gap-4">
+    <header data-component="navbar" className="h-[56px] flex items-center px-6 bg-white border-b border-[#e3e8ef] flex-shrink-0 gap-4">
       {/* Hamburger — mobile only */}
       <button
         className="md:hidden p-1.5 rounded-lg text-[#697586] hover:text-[#202939] hover:bg-[#f8fafc] transition-colors flex-shrink-0"

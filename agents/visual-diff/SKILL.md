@@ -9,6 +9,8 @@ Close the gap between the Figma design and the rendered frontend using a
 The agent applies CSS fixes **directly** using Read + Edit tools. It loops until
 the pixelmatch full-page score ≥ 98% or max_loops reached.
 
+**Run as Claude Opus 4.6 (`claude-opus-4-6`) for best reasoning per fix loop.**
+
 ---
 
 ## When to Run
@@ -32,11 +34,12 @@ Runs as **Step 5.5** — after Testing Agent, before Checkpoint 1.
 
 ```
 LOOP up to max_loops:
-  Step 1 — Screenshot at 1440×1332 (matches Figma @1x canvas height)
+  Step 1 — Full-page screenshot at 1440×1332 (matches Figma @1x canvas height)
   Step 2 — pixelmatch: full-page score + per-region breakdown + diff PNG
   if full-page score ≥ 98% → PASSED
   Step 3 — Vision reads the diff PNG → identifies what's red and why
-  Step 4 — Apply fixes directly (Read + Edit source files)
+  Step 4a — For any component with Y-mismatch: element-level screenshot + Figma lookup
+  Step 4b — Apply fixes directly (Read + Edit source files)
   Step 5 — sleep 1 (HMR)
   continue
 
@@ -45,7 +48,7 @@ return MAX_LOOPS_REACHED
 
 ---
 
-## Step 1 — Screenshot
+## Step 1 — Full-Page Screenshot
 
 ```bash
 python3 agents/shared/playwright_screenshot.py {route} /tmp/rendered-{task_id}.png 1440 1332
@@ -56,6 +59,52 @@ Matching the viewport height to the Figma @1x height aligns the two images so pi
 
 If the page content fits in less than 1332px, the extra space is empty white — that's fine,
 pixelmatch will score it as matching (white = white).
+
+---
+
+## Step 1b — Element-Level Screenshots (when Y-mismatch detected)
+
+All major dashboard sections have `data-component` attributes set on their root element.
+Use element-level screenshots for components where full-page Y-alignment is suspect:
+
+```bash
+# Screenshot a specific component by its data-component attribute
+python3 agents/shared/playwright_screenshot.py {route} /tmp/comp-school-health.png \
+  --selector "[data-component='school-health']"
+
+python3 agents/shared/playwright_screenshot.py {route} /tmp/comp-user-distribution.png \
+  --selector "[data-component='user-distribution']"
+```
+
+Available `data-component` values on the dashboard:
+- `navbar` — top navigation bar
+- `sidebar` — left sidebar
+- `quick-actions` — top action buttons row
+- `stat-cards` — 4 metric cards row
+- `school-health` — school health index panel
+- `intelligence-insights` — AI insights panel
+- `status-cards` — status indicator cards
+- `absentees-table` — absentee data table
+- `user-distribution` — user distribution bar chart
+
+**When to use element screenshots:** If the diff PNG shows red scattered across the page
+in a positional pattern (whole sections shifted), switch to element-level screenshots
+for those components and compare them against the equivalent Figma node crop.
+
+**Getting the Figma node crop to compare against:**
+```bash
+# Get exact measurements from Figma for a named node
+python3 agents/shared/figma_lookup.py --node-name "School Health Index" \
+  --output /tmp/figma-node-school-health.json
+```
+Then use the `node_id` to export just that frame via the Figma API:
+```bash
+source .env
+curl -s "https://api.figma.com/v1/images/$FIGMA_FILE_ID?ids={node_id}&format=png&scale=2" \
+  -H "X-Figma-Token: $FIGMA_API_TOKEN" \
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(list(d['images'].values())[0])"
+# Then curl -sL that URL to /tmp/figma-comp-school-health.png
+```
 
 ---
 
@@ -101,13 +150,25 @@ For every RED region you see:
 3. Which source file likely controls it?
 4. What exact CSS change would fix it?
 
+If you are uncertain about exact values (px, hex colors), say so — the agent
+will use figma_lookup.py to get authoritative measurements from the Figma API.
+
 Output as JSON array:
 [
   {
     "component": "SchoolHealthProgressBar",
     "what_is_wrong": "segments are rounded pills, Figma shows square blocks",
     "file": "apps/web/src/components/dashboard/DashboardBody.tsx",
-    "fix": "change rounded-full to rounded-[2px] on segment divs"
+    "fix": "change rounded-full to rounded-[2px] on segment divs",
+    "needs_figma_lookup": false
+  },
+  {
+    "component": "UserDistributionChart",
+    "what_is_wrong": "Y-axis labels missing, bar colors uncertain",
+    "file": "apps/web/src/components/dashboard/DashboardBody.tsx",
+    "fix": "add Y-axis labels; verify bar colors",
+    "needs_figma_lookup": true,
+    "figma_node_name": "User Distribution"
   }
 ]
 
@@ -116,9 +177,31 @@ If there are no red regions (only grey/yellow), return: { "status": "PASSED" }
 
 ---
 
-## Step 4 — Apply Fixes
+## Step 4 — Get Authoritative Measurements (when needs_figma_lookup = true)
 
-For each fix from Vision:
+For any fix where Vision is uncertain about exact values:
+
+```bash
+python3 agents/shared/figma_lookup.py --node-name "{figma_node_name}" \
+  --output /tmp/figma-lookup-{component}.json
+```
+
+Read the output JSON. It provides:
+- `size` — exact width/height in px
+- `fills` — exact hex colors
+- `corner_radius` — exact border radius
+- `gap` — item spacing
+- `padding` — exact padding values
+- `font` — family, size, weight
+- `children_summary` — repeated child sizes/colors (e.g. 30 progress segments)
+
+Use these authoritative values in your fix instead of Vision's guess.
+
+---
+
+## Step 5 — Apply Fixes
+
+For each fix from Vision (enriched with Figma lookup data where needed):
 
 1. **Read** the file
 2. **Find** the exact code (search for the class or element described)
@@ -131,10 +214,11 @@ For each fix from Vision:
 - One diff → one Edit call
 - If Vision says "add X" → find the element's className and append
 - If Vision says "change X to Y" → find X in context and replace
+- If Figma lookup gives a hex color → use that exact value, not a Tailwind approximation
 
 ---
 
-## Step 5 — HMR Wait
+## Step 6 — HMR Wait
 
 ```bash
 sleep 1
@@ -165,13 +249,9 @@ the lower sections will be at different Y coordinates. In this case:
 **Detection:** If the rendered screenshot has large empty white areas at the bottom AND diff shows
 red in mid-page areas, this is likely positional mismatch, not actual visual differences.
 
-**Fix strategy:** In this case, crop each component individually using Playwright element screenshots:
-```bash
-# Screenshot a specific element by CSS selector
-python3 agents/shared/playwright_screenshot.py {route} /tmp/comp-{name}.png \
-  --selector ".school-health-card"
-```
-Then compare the cropped component against the equivalent Figma crop.
+**Fix strategy:** Switch to element-level screenshots (Step 1b) for affected components.
+Export the matching Figma frame crop and compare component-to-component.
+The `data-component` attributes on all dashboard sections make this easy.
 
 ---
 
@@ -210,5 +290,6 @@ Then compare the cropped component against the equivalent Figma crop.
 | Dev server not found | Log warning, skip visual diff, add to Checkpoint 1 summary |
 | `figma_png_path` missing | Skip, log warning |
 | `pixelmatch.py` fails | Fall back to Vision-only comparison (read both PNGs directly) |
+| `figma_lookup.py` fails | Use Vision estimate, log warning |
 | Vision returns invalid JSON | Retry once with stricter prompt |
 | Score < 90 after loop 2 | Halt, post diff report + region scores to ClickUp |

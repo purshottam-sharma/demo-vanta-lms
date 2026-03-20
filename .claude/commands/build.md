@@ -120,13 +120,13 @@ Save WorkOrder. `current_step: 5`.
 
 Read `agents/visual-diff/SKILL.md`.
 
-Spawn Visual Diff Agent sub-agent:
-- Provide: `figma_png_path` (`/tmp/figma-{task_id}.png`), `vision_summary` (from Design Agent), `task_id`, `route` (primary route from acceptance_criteria, e.g. `/dashboard`), `generated_frontend_files`, `max_loops: 5`
-- Instruction: read `agents/visual-diff/SKILL.md` carefully and follow it exactly. The agent runs a self-contained loop — it takes screenshots, compares with Vision, and applies CSS fixes DIRECTLY using Read + Edit tools on the source files. It does NOT route fixes to other agents. It loops until score ≥ 95% or max_loops reached.
-- Returns: `VisualDiffReport { status, final_score, loops_run, diffs_found_total, diffs_remaining, priority_checks, fixes_applied }`
+Spawn Visual Diff Agent sub-agent **using model: opus** (Claude Opus 4.6 — `claude-opus-4-6`):
+- Provide: `figma_png_path` (`/tmp/figma-{task_id}.png`), `vision_summary` (from Design Agent), `task_id`, `route` (primary route from acceptance_criteria, e.g. `/dashboard`), `generated_frontend_files`, `regions_json` (`agents/shared/dashboard-regions.json` for dashboard tasks), `max_loops: 5`
+- Instruction: read `agents/visual-diff/SKILL.md` carefully and follow it exactly. The agent runs a self-contained loop — it takes screenshots, compares with pixelmatch (real pixel diff), reads the diff PNG with Vision, and applies CSS fixes DIRECTLY using Read + Edit tools on the source files. It does NOT route fixes to other agents. It loops until full-page score ≥ 98% or max_loops reached. For components with Y-coordinate misalignment, use element-level screenshots via `--selector "[data-component='...']"`.
+- Returns: `VisualDiffReport { status, final_score, loops_run, diff_pixels_start, diff_pixels_end, fixes_applied, region_scores }`
 
-**If status = PASSED (score ≥ 95):** proceed to Step 6, include "Visual diff: PASSED score={final_score} ({loops_run} loops, {diffs_found_total} diffs fixed)" in Checkpoint 1 summary.
-**If status = MAX_LOOPS_REACHED:** proceed to Step 6, include `final_score` + `diffs_remaining_list` in Checkpoint 1 summary so the human can decide whether to approve or request changes.
+**If status = PASSED (score ≥ 98):** proceed to Step 6, include "Visual diff: PASSED score={final_score} ({loops_run} loops, {diff_pixels_start}→{diff_pixels_end} diff pixels)" in Checkpoint 1 summary.
+**If status = MAX_LOOPS_REACHED:** proceed to Step 6, include `final_score` + `region_scores` in Checkpoint 1 summary so the human can decide whether to approve or request changes.
 **If status = HALTED_LOW_SCORE:** post diff report to ClickUp, halt, require human fix before proceeding.
 **If Visual Diff Agent errors (Playwright missing, server won't start):** log warning, skip, proceed to Step 6.
 

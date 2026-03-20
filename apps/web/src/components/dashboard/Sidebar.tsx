@@ -61,6 +61,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar panel */}
       <aside
+        data-component="sidebar"
         className={[
           'fixed top-0 left-0 h-full z-30 flex flex-col bg-white border-r border-[#e3e8ef] transition-transform duration-300',
           'w-[236px]',

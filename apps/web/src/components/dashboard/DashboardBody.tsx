@@ -26,7 +26,7 @@ function QuickActionsSection() {
   ];
 
   return (
-    <div className="flex flex-col gap-2">
+    <div data-component="quick-actions" className="flex flex-col gap-2">
       <div className="flex flex-col gap-0.5">
         <h2 className="text-base font-semibold text-[#202939]">Quick Actions</h2>
         <p className="text-[13px] text-[#697586]">Frequently used administrative functions</p>
@@ -89,7 +89,7 @@ function StatCardsRow() {
   ];
 
   return (
-    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+    <div data-component="stat-cards" className="grid grid-cols-2 xl:grid-cols-4 gap-3">
       {stats.map(({ label, value, trend, icon: Icon, iconBg, iconColor }) => (
         <div
           key={label}
@@ -140,7 +140,7 @@ function HealthAndInsightsRow() {
   return (
     <div className="grid gap-3" style={{ gridTemplateColumns: '3fr 2fr' }}>
       {/* School Health Index */}
-      <div className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      <div data-component="school-health" className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-[#fff1f0] flex items-center justify-center">
@@ -187,7 +187,7 @@ function HealthAndInsightsRow() {
       </div>
 
       {/* Intelligence Insights */}
-      <div className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      <div data-component="intelligence-insights" className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-[#faf5ff] flex items-center justify-center">
@@ -211,7 +211,7 @@ function HealthAndInsightsRow() {
 // ─── Status Cards Row (4 equal columns) ───────────────────────────────────────
 function StatusCardsRow() {
   return (
-    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+    <div data-component="status-cards" className="grid grid-cols-2 xl:grid-cols-4 gap-3">
       {/* Compliance Status */}
       <div className="h-[120px] p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
@@ -324,7 +324,7 @@ function BottomPanelsRow() {
   return (
     <div className="grid gap-3" style={{ gridTemplateColumns: '3fr 2fr' }}>
       {/* Absentees Alerts Panel */}
-      <div className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      <div data-component="absentees-table" className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="text-[15px] font-semibold text-[#202939]">Absentees Alerts</span>
           <button className="text-[13px] font-medium text-[#a38654] cursor-pointer hover:underline">
@@ -368,7 +368,7 @@ function BottomPanelsRow() {
       </div>
 
       {/* User Distribution by Role Panel */}
-      <div className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
+      <div data-component="user-distribution" className="p-4 rounded-[10px] bg-white border border-[#e3e8ef] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="text-[15px] font-semibold text-[#202939]">User Distribution by Role</span>
           <button className="text-[13px] font-medium text-[#a38654] cursor-pointer hover:underline">
