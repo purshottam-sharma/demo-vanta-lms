@@ -51,7 +51,7 @@ function QuickActionsSection() {
 // ─── Stat Cards Row ─────────────────────────────────────────────────────────────
 // UISpec: flex-row gap-6 (24px), each card 271x144, p-4, gap-3, rounded-xl
 // Icon badge: 32x32 rounded-lg p-1, SOLID accent color bg, white icon 20x20
-// Expand badge: 32x32 bg-[#a38654] rounded-lg, ArrowRight icon #202939
+// Expand badge: 32x32 bg-[#f4f0eb] rounded-lg, ArrowRight icon #697586 (from Figma pixel sample)
 function StatCardsRow() {
   const stats = [
     { label: 'Total Departments', value: '45',     trend: '+ 38%', trendLabel: 'vs last month', icon: Building,     iconBg: '#a38654' },
@@ -72,8 +72,8 @@ function StatCardsRow() {
               </div>
               <span className="text-[14px] text-[#697586]">{label}</span>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-[#a38654] flex items-center justify-center flex-shrink-0">
-              <ArrowRight className="h-[18px] w-[18px] text-[#202939]" />
+            <div className="w-8 h-8 rounded-lg bg-[#f4f0eb] flex items-center justify-center flex-shrink-0">
+              <ArrowRight className="h-[18px] w-[18px] text-[#697586]" />
             </div>
           </div>
           {/* Row 2: stat value — UISpec: lineHeightPx 32 */}
@@ -123,8 +123,8 @@ function HealthAndInsightsRow() {
             </div>
             <span className="text-[16px] font-normal text-[#697586]">School Health Index</span>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-[#a38654] flex items-center justify-center flex-shrink-0">
-            <ArrowRight className="h-[18px] w-[18px] text-[#202939]" />
+          <div className="w-8 h-8 rounded-lg bg-[#f4f0eb] flex items-center justify-center flex-shrink-0">
+            <ArrowRight className="h-[18px] w-[18px] text-[#697586]" />
           </div>
         </div>
 
@@ -170,8 +170,8 @@ function HealthAndInsightsRow() {
             </div>
             <span className="text-[16px] font-normal text-[#697586]">Intelligence Insights (Today)</span>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-[#a38654] flex items-center justify-center flex-shrink-0">
-            <ArrowRight className="h-[18px] w-[18px] text-[#202939]" />
+          <div className="w-8 h-8 rounded-lg bg-[#f4f0eb] flex items-center justify-center flex-shrink-0">
+            <ArrowRight className="h-[18px] w-[18px] text-[#697586]" />
           </div>
         </div>
 
@@ -204,8 +204,8 @@ function StatusCardsRow() {
             </div>
             <span className="text-[14px] text-[#697586]">Compliance Status</span>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-[#a38654] flex items-center justify-center flex-shrink-0">
-            <ArrowRight className="h-[18px] w-[18px] text-[#202939]" />
+          <div className="w-8 h-8 rounded-lg bg-[#f4f0eb] flex items-center justify-center flex-shrink-0">
+            <ArrowRight className="h-[18px] w-[18px] text-[#697586]" />
           </div>
         </div>
         <div className="flex items-baseline gap-2">
@@ -228,8 +228,8 @@ function StatusCardsRow() {
             </div>
             <span className="text-[14px] text-[#697586]">Interventions</span>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-[#a38654] flex items-center justify-center flex-shrink-0">
-            <ArrowRight className="h-[18px] w-[18px] text-[#202939]" />
+          <div className="w-8 h-8 rounded-lg bg-[#f4f0eb] flex items-center justify-center flex-shrink-0">
+            <ArrowRight className="h-[18px] w-[18px] text-[#697586]" />
           </div>
         </div>
         {/* 3 metrics side by side */}
@@ -259,8 +259,8 @@ function StatusCardsRow() {
             </div>
             <span className="text-[14px] text-[#697586]">Students at Risk</span>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-[#a38654] flex items-center justify-center flex-shrink-0">
-            <ArrowRight className="h-[18px] w-[18px] text-[#202939]" />
+          <div className="w-8 h-8 rounded-lg bg-[#f4f0eb] flex items-center justify-center flex-shrink-0">
+            <ArrowRight className="h-[18px] w-[18px] text-[#697586]" />
           </div>
         </div>
         <div className="flex flex-col">
