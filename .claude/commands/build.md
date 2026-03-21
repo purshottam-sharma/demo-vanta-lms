@@ -5,6 +5,25 @@ argument-hint: CU-{task_id}
 
 You are the **Orchestrator** for Vanta LMS. Execute the full build pipeline for ClickUp task `$ARGUMENTS`.
 
+**Record the run start time immediately:**
+```bash
+RUN_START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+```
+This is passed to the Retrospect Agent at Step 11.
+
+## Tool Budget
+Read `agents/shared/TOOL-BUDGET.md` before starting. Your own budget is **20 tool calls**.
+Key rules:
+- Use `ss -tlnp | grep node` (1 call) to find the dev server port — never curl-poll
+- Check `/tmp/figma_node_{task_id}.json` before spawning Design Agent — if it exists, pass cached data directly
+- Use `Read` tool not `Bash cat` for any file you need to inspect
+
+## Multi-Model Routing
+Read `agents/shared/multi-model-strategy.md` for full details. Key rules:
+- **Gemini 2.5 Pro** → vision steps only (Design Agent Step 4, Visual Diff Agent Step 3) — called via `python3 agents/shared/gemini.py`
+- **Claude Opus 4.6** → Visual Diff Agent loop runner (spawn with `model: opus`)
+- **Claude Sonnet 4.6** → all other agents (default)
+
 ## Your Inputs
 - Task ID: `$ARGUMENTS`
 - Field IDs: read `.mcp/clickup-fields.json`
@@ -67,9 +86,9 @@ If the export fails, log a warning and continue — do not halt.
 Spawn both sub-agents **simultaneously** using the Agent tool:
 
 **Design Agent** (only if figma_url is present):
-- Provide: task title, figma_url, acceptance_criteria (UI-relevant only)
-- Instruction: read `agents/design/SKILL.md`, then fetch the Figma frame, extract UISpec JSON (components, color tokens, typography, interactions), self-reflect vs Figma + criteria
-- Returns: UISpec JSON
+- Provide: task title, figma_url, task_id, acceptance_criteria (UI-relevant only)
+- Instruction: read `agents/design/SKILL.md`. Run `figma_traverse.py` + `icon_audit_v2.py` FIRST (Step 1b) to build the icon manifest before any API or Vision calls. Then fetch Figma node JSON, download frame PNG, run Gemini Vision for visual intent only (never for icon names). Merge API measurements + Vision observations into enriched UISpec. Self-reflect vs criteria — verify `icon_manifest_path` exists before returning.
+- Returns: UISpec JSON + `figma_png_path` + `icon_manifest_path` (`/tmp/icon-manifest-{task_id}.json`) + `vision_summary` (3-5 bullet points of non-obvious design choices)
 
 **Backend Agent** (only if api_endpoints or DB tables are present):
 - Provide: task description, affected tables/columns, api_endpoints, acceptance_criteria (backend-relevant)
@@ -82,8 +101,8 @@ Save WorkOrder after both complete. `current_step: 2`.
 Read `agents/frontend/SKILL.md`.
 
 Spawn Frontend Agent sub-agent:
-- Provide: UISpec (from Design Agent), API contract (endpoints + Pydantic models from Backend Agent), acceptance_criteria
-- Instruction: read `agents/frontend/SKILL.md` and `skills/react-shadcn.md`, generate React pages + components + React Query hooks + TypeScript types using shadcn/ui, self-reflect vs UISpec + API contract
+- Provide: UISpec JSON (from Design Agent), `figma_png_path`, `vision_summary`, `icon_manifest_path` (`/tmp/icon-manifest-{task_id}.json`), API contract (endpoints + Pydantic models from Backend Agent), acceptance_criteria
+- Instruction: read `agents/frontend/SKILL.md` and `skills/react-shadcn.md`, generate React pages + components + React Query hooks + TypeScript types using shadcn/ui. **Read `icon_manifest_path` first** — every icon import must come from the manifest's `lucide_name` field. Do not guess icon names from the UISpec, PNG, or vision_summary. If an icon has `"icon_unresolved": true`, find the closest Lucide match and note it. Pay close attention to `vision_summary` for non-obvious layout choices. Self-reflect vs UISpec + icon manifest + API contract.
 - Returns: list of GeneratedFile (agent_source="frontend")
 
 Save WorkOrder. `current_step: 3`.
@@ -114,6 +133,23 @@ Spawn Testing Agent sub-agent:
 If failures → send failures back to originating agent to fix. Max 2 fix cycles.
 If still failing after 2 cycles → post failure log to ClickUp, halt, require human fix.
 Save WorkOrder. `current_step: 5`.
+
+## Step 5.5 — Visual Diff Agent (feature-ui tasks only)
+**Skip this step entirely if `figma_url` is not present or task_type is not `feature-ui`.**
+
+Read `agents/visual-diff/SKILL.md`.
+
+Spawn Visual Diff Agent sub-agent **using model: opus** (Claude Opus 4.6 — `claude-opus-4-6`):
+- Provide: `figma_png_path` (`/tmp/figma-{task_id}.png`), `vision_summary` (from Design Agent), `task_id`, `route` (primary route from acceptance_criteria, e.g. `/dashboard`), `generated_frontend_files`, `regions_json` (`agents/shared/dashboard-regions.json` for dashboard tasks), `max_loops: 5`
+- Instruction: read `agents/visual-diff/SKILL.md` carefully and follow it exactly. The agent runs a self-contained loop — it takes screenshots, compares with pixelmatch (real pixel diff), reads the diff PNG with Vision, and applies CSS fixes DIRECTLY using Read + Edit tools on the source files. It does NOT route fixes to other agents. It loops until full-page score ≥ 98% or max_loops reached. For components with Y-coordinate misalignment, use element-level screenshots via `--selector "[data-component='...']"`.
+- Returns: `VisualDiffReport { status, final_score, loops_run, diff_pixels_start, diff_pixels_end, fixes_applied, region_scores }`
+
+**If status = PASSED (score ≥ 98):** proceed to Step 6, include "Visual diff: PASSED score={final_score} ({loops_run} loops, {diff_pixels_start}→{diff_pixels_end} diff pixels)" in Checkpoint 1 summary.
+**If status = MAX_LOOPS_REACHED:** proceed to Step 6, include `final_score` + `region_scores` in Checkpoint 1 summary so the human can decide whether to approve or request changes.
+**If status = HALTED_LOW_SCORE:** post diff report to ClickUp, halt, require human fix before proceeding.
+**If Visual Diff Agent errors (Playwright missing, server won't start):** log warning, skip, proceed to Step 6.
+
+Save WorkOrder. `current_step: 5.5`.
 
 ## Step 6 — Human Checkpoint 1
 Post to ClickUp task:
@@ -241,6 +277,24 @@ Spawn a PR Review Agent sub-agent immediately after the PR is created:
   - If changes requested: "PR Review Agent flagged issues ⚠️. Inline comments posted on GitHub. Review them at {pr_url} — you decide whether to fix or merge as-is."
 
 Save WorkOrder with `current_step: 10`, `pr_review: "approved"|"changes_requested"`.
+
+## Step 11 — Retrospect Agent (always runs)
+
+Spawn Retrospect Agent sub-agent:
+- Provide: `task_id`, `run_start_time` (captured at pipeline start), `anti_patterns_from_session` (any inefficiencies you noticed inline during the run)
+- Instruction: read `agents/retrospect/SKILL.md` and `agents/shared/TOOL-BUDGET.md`, then:
+  1. Run `python3 agents/shared/retrospect.py --task-id {task_id} --since {run_start_time}` to analyze the audit log
+  2. For each HIGH/MED anti-pattern found: edit the relevant SKILL.md file to add a concrete prevention rule
+  3. Post a structured efficiency report to ClickUp as a comment
+  4. Return the report JSON
+- Returns: `RetrospectReport { grade, efficiency_score, total_calls, anti_patterns_found, skill_files_patched, estimated_calls_saved_next_run }`
+
+**This step runs regardless of pipeline outcome** — even if earlier steps had errors.
+The goal is continuous improvement: each run should be cheaper than the last.
+
+Save WorkOrder with `current_step: 11`, `retrospect: { grade, efficiency_score }`.
+
+Tell the user: "Retrospect: Grade {grade} ({total_calls} calls / target {target}). {anti_patterns_found} anti-patterns found → SKILL.md files patched to prevent recurrence."
 
 ## On PR Merge (automated — GitHub Actions)
 The workflow `.github/workflows/sync-clickup-on-merge.yml` fires automatically when any PR targeting `main` is merged. No agent action required.

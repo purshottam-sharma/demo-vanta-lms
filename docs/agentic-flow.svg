@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1090"
+     viewBox="0 0 900 1090" font-family="ui-sans-serif, system-ui, sans-serif">
+  <defs>
+    <marker id="a"  markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker>
+    <marker id="ag" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#16a34a"/></marker>
+    <marker id="ab" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#2563eb"/></marker>
+    <marker id="ac" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#0891b2"/></marker>
+    <marker id="ao" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#d97706"/></marker>
+  </defs>
+  <rect x="0" y="0" width="900" height="1090" rx="0" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="450" y="30" text-anchor="middle" font-size="18" font-weight="700" fill="#0f172a">Agentic Dev Flow</text>
+  <text x="450" y="47" text-anchor="middle" font-size="10" font-weight="normal" fill="#64748b" font-style="italic">Claude Code native &#183; no separate Anthropic API calls needed</text>
+  <rect x="280" y="58" width="220" height="42" rx="21" fill="#6366f1" stroke="#4338ca" stroke-width="2"/>
+  <text x="390" y="74" text-anchor="middle" font-size="13" font-weight="700" fill="white">&#x1F9D1;&#x200D;&#x1F4BB;  Developer</text>
+  <text x="390" y="90" text-anchor="middle" font-size="10" font-weight="normal" fill="#c7d2fe">triggers slash commands</text>
+  <line x1="390" y1="100" x2="390" y2="116" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="290" y="119" width="200" height="38" rx="8" fill="#7c3aed" stroke="#6d28d9" stroke-width="1.5"/>
+  <text x="390" y="134" text-anchor="middle" font-size="12" font-weight="600" fill="white">/pm CU-{id}</text>
+  <text x="390" y="149" text-anchor="middle" font-size="10" font-weight="normal" fill="#e9d5ff">PM slash command</text>
+  <line x1="390" y1="157" x2="390" y2="172" stroke="#7c3aed" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="290" y="175" width="200" height="50" rx="8" fill="#8b5cf6" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="390" y="195" text-anchor="middle" font-size="12" font-weight="600" fill="white">PM Agent  #0</text>
+  <text x="390" y="212" text-anchor="middle" font-size="10" font-weight="normal" fill="#ede9fe">Grooms task &#183; fills ClickUp fields</text>
+  <line x1="390" y1="225" x2="390" y2="241" stroke="#16a34a" stroke-width="2" marker-end="url(#ag)"/>
+  <rect x="290" y="244" width="200" height="46" rx="23" fill="#16a34a" stroke="#15803d" stroke-width="2"/>
+  <text x="390" y="262" text-anchor="middle" font-size="12" font-weight="700" fill="white">&#x2705;  Checkpoint 0</text>
+  <text x="390" y="279" text-anchor="middle" font-size="10" font-weight="normal" fill="#dcfce7">agent_task_approved</text>
+  <text x="505" y="264" text-anchor="start" font-size="9" font-weight="normal" fill="#16a34a">&#8592; human</text>
+  <line x1="390" y1="290" x2="390" y2="306" stroke="#16a34a" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="395" y="301" text-anchor="start" font-size="9" font-weight="normal" fill="#16a34a">approved</text>
+  <rect x="290" y="309" width="200" height="38" rx="8" fill="#2563eb" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="390" y="324" text-anchor="middle" font-size="12" font-weight="600" fill="white">/build CU-{id}</text>
+  <text x="390" y="339" text-anchor="middle" font-size="10" font-weight="normal" fill="#bfdbfe">Build slash command</text>
+  <line x1="390" y1="347" x2="390" y2="362" stroke="#2563eb" stroke-width="2" marker-end="url(#ab)"/>
+  <rect x="290" y="365" width="200" height="50" rx="10" fill="#1d4ed8" stroke="#1e40af" stroke-width="2"/>
+  <text x="390" y="384" text-anchor="middle" font-size="13" font-weight="700" fill="white">Orchestrator  #1</text>
+  <text x="390" y="401" text-anchor="middle" font-size="10" font-weight="normal" fill="#bfdbfe">Coordinates all sub-agents</text>
+  <line x1="390" y1="415" x2="390" y2="425" stroke="#2563eb" stroke-width="2"/>
+  <line x1="148" y1="425" x2="632" y2="425" stroke="#2563eb" stroke-width="2"/>
+  <line x1="148" y1="425" x2="148" y2="436" stroke="#2563eb" stroke-width="2" marker-end="url(#ab)"/>
+  <line x1="390" y1="425" x2="390" y2="436" stroke="#2563eb" stroke-width="2" marker-end="url(#ab)"/>
+  <line x1="632" y1="425" x2="632" y2="436" stroke="#2563eb" stroke-width="2" marker-end="url(#ab)"/>
+  <rect x="66" y="438" width="165" height="56" rx="8" fill="#0891b2" stroke="#0e7490" stroke-width="1.5"/>
+  <text x="148" y="457" text-anchor="middle" font-size="11" font-weight="600" fill="white">Design  #2</text>
+  <text x="148" y="472" text-anchor="middle" font-size="9" font-weight="normal" fill="#cffafe">Figma &#8594; UISpec JSON</text>
+  <rect x="308" y="438" width="165" height="56" rx="8" fill="#0891b2" stroke="#0e7490" stroke-width="1.5"/>
+  <text x="390" y="457" text-anchor="middle" font-size="11" font-weight="600" fill="white">Backend  #3</text>
+  <text x="390" y="472" text-anchor="middle" font-size="9" font-weight="normal" fill="#cffafe">FastAPI + SQL</text>
+  <rect x="550" y="438" width="165" height="56" rx="8" fill="#0891b2" stroke="#0e7490" stroke-width="1.5"/>
+  <text x="632" y="457" text-anchor="middle" font-size="11" font-weight="600" fill="white">Frontend  #4</text>
+  <text x="632" y="472" text-anchor="middle" font-size="9" font-weight="normal" fill="#cffafe">React + shadcn/ui</text>
+  <line x1="148" y1="494" x2="148" y2="504" stroke="#0891b2" stroke-width="2"/>
+  <line x1="390" y1="494" x2="390" y2="504" stroke="#0891b2" stroke-width="2"/>
+  <line x1="632" y1="494" x2="632" y2="504" stroke="#0891b2" stroke-width="2"/>
+  <line x1="148" y1="504" x2="632" y2="504" stroke="#0891b2" stroke-width="2"/>
+  <line x1="390" y1="504" x2="390" y2="514" stroke="#0891b2" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="290" y="516" width="200" height="44" rx="8" fill="#0d9488" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="390" y="533" text-anchor="middle" font-size="11" font-weight="600" fill="white">Reflector Agent  #5</text>
+  <text x="390" y="549" text-anchor="middle" font-size="10" font-weight="normal" fill="#99f6e4">Backend &#8596; Frontend Contract</text>
+  <line x1="390" y1="560" x2="390" y2="570" stroke="#0d9488" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="290" y="572" width="200" height="44" rx="8" fill="#059669" stroke="#047857" stroke-width="1.5"/>
+  <text x="390" y="589" text-anchor="middle" font-size="11" font-weight="600" fill="white">Testing Agent  #6</text>
+  <text x="390" y="605" text-anchor="middle" font-size="10" font-weight="normal" fill="#a7f3d0">pytest + vitest + Playwright</text>
+  <line x1="390" y1="616" x2="390" y2="626" stroke="#059669" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="290" y="628" width="200" height="58" rx="8" fill="#d97706" stroke="#b45309" stroke-width="1.5"/>
+  <text x="390" y="647" text-anchor="middle" font-size="11" font-weight="600" fill="white">Review Agent  #7</text>
+  <text x="390" y="663" text-anchor="middle" font-size="10" font-weight="normal" fill="#fef3c7">Score 0&#8211;100</text>
+  <text x="390" y="678" text-anchor="middle" font-size="10" font-weight="normal" fill="#fef3c7">&#8805; 80 = pass  &#183;  &lt; 80 = retry</text>
+  <line x1="290" y1="657" x2="248" y2="657" stroke="#d97706" stroke-width="1.5"/>
+  <line x1="248" y1="657" x2="248" y2="390" stroke="#d97706" stroke-width="1.5"/>
+  <line x1="248" y1="390" x2="288" y2="390" stroke="#d97706" stroke-width="1.5" marker-end="url(#ao)"/>
+  <text x="243" y="517" text-anchor="end" font-size="9" font-weight="normal" fill="#d97706">&lt; 80</text>
+  <text x="243" y="530" text-anchor="end" font-size="9" font-weight="normal" fill="#d97706">retry</text>
+  <line x1="390" y1="686" x2="390" y2="700" stroke="#16a34a" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="395" y="698" text-anchor="start" font-size="9" font-weight="normal" fill="#16a34a">&#8805; 80</text>
+  <rect x="290" y="702" width="200" height="44" rx="22" fill="#16a34a" stroke="#15803d" stroke-width="2"/>
+  <text x="390" y="719" text-anchor="middle" font-size="12" font-weight="700" fill="white">&#x2705;  Checkpoint 1</text>
+  <text x="390" y="735" text-anchor="middle" font-size="10" font-weight="normal" fill="#dcfce7">agent_code_approved</text>
+  <text x="505" y="726" text-anchor="start" font-size="9" font-weight="normal" fill="#16a34a">&#8592; human</text>
+  <line x1="390" y1="746" x2="390" y2="760" stroke="#16a34a" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="395" y="757" text-anchor="start" font-size="9" font-weight="normal" fill="#16a34a">approved</text>
+  <rect x="290" y="762" width="200" height="44" rx="22" fill="#16a34a" stroke="#15803d" stroke-width="2"/>
+  <text x="390" y="779" text-anchor="middle" font-size="12" font-weight="700" fill="white">&#x2705;  Checkpoint 2</text>
+  <text x="390" y="795" text-anchor="middle" font-size="10" font-weight="normal" fill="#dcfce7">agent_pr_approved</text>
+  <text x="505" y="786" text-anchor="start" font-size="9" font-weight="normal" fill="#16a34a">&#8592; human</text>
+  <line x1="390" y1="806" x2="390" y2="820" stroke="#16a34a" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="395" y="817" text-anchor="start" font-size="9" font-weight="normal" fill="#16a34a">approved</text>
+  <rect x="290" y="822" width="200" height="44" rx="8" fill="#1f2937" stroke="#111827" stroke-width="2"/>
+  <text x="390" y="839" text-anchor="middle" font-size="12" font-weight="600" fill="white">GitHub Agent  #8</text>
+  <text x="390" y="855" text-anchor="middle" font-size="10" font-weight="normal" fill="#9ca3af">Branch + Commit + Pull Request</text>
+  <line x1="390" y1="866" x2="390" y2="878" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="270" y="880" width="240" height="44" rx="8" fill="#111827" stroke="#000" stroke-width="2"/>
+  <text x="390" y="898" text-anchor="middle" font-size="13" font-weight="700" fill="white">GitHub PR Created</text>
+  <text x="390" y="915" text-anchor="middle" font-size="9" font-weight="normal" fill="#9ca3af">feature/CU-{id}-{slug}  &#8594;  review  &#8594;  merge</text>
+  <rect x="18" y="938" width="864" height="76" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="30" y="952" text-anchor="start" font-size="10" font-weight="600" fill="#15803d">MCP Integrations</text>
+  <rect x="28" y="958" width="190" height="48" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="123" y="977" text-anchor="middle" font-size="10" font-weight="600" fill="#1e40af">ClickUp MCP</text>
+  <text x="123" y="993" text-anchor="middle" font-size="9" font-weight="normal" fill="#475569">Tasks &#183; Fields &#183; Status</text>
+  <rect x="226" y="958" width="190" height="48" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="321" y="977" text-anchor="middle" font-size="10" font-weight="600" fill="#14532d">GitHub MCP</text>
+  <text x="321" y="993" text-anchor="middle" font-size="9" font-weight="normal" fill="#475569">Branches &#183; PRs &#183; Labels</text>
+  <rect x="424" y="958" width="190" height="48" rx="6" fill="#f3e8ff" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="519" y="977" text-anchor="middle" font-size="10" font-weight="600" fill="#4c1d95">Figma MCP</text>
+  <text x="519" y="993" text-anchor="middle" font-size="9" font-weight="normal" fill="#475569">Designs &#183; Frames</text>
+  <rect x="622" y="958" width="190" height="48" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="717" y="977" text-anchor="middle" font-size="10" font-weight="600" fill="#78350f">PostgreSQL MCP</text>
+  <text x="717" y="993" text-anchor="middle" font-size="9" font-weight="normal" fill="#475569">Read-only Schema</text>
+  <rect x="18" y="1042" width="864" height="34" rx="6" fill="#fefce8" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="28" y="1055" text-anchor="start" font-size="9" font-weight="600" fill="#78350f">Safety:</text>
+  <rect x="80" y="1047" width="108" height="22" rx="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="134" y="1062" text-anchor="middle" font-size="9" font-weight="normal" fill="#78350f">bash_guard</text>
+  <rect x="198" y="1047" width="108" height="22" rx="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="252" y="1062" text-anchor="middle" font-size="9" font-weight="normal" fill="#78350f">postgres_guard</text>
+  <rect x="316" y="1047" width="108" height="22" rx="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="370" y="1062" text-anchor="middle" font-size="9" font-weight="normal" fill="#78350f">github_guard</text>
+  <rect x="434" y="1047" width="108" height="22" rx="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="488" y="1062" text-anchor="middle" font-size="9" font-weight="normal" fill="#78350f">audit_logger</text>
+  <text x="450" y="1085" text-anchor="middle" font-size="8" font-weight="normal" fill="#94a3b8" font-style="italic">ClickUp Status: to do &#8594; ready &#8594; in progress &#8594; in review &#8594; complete</text>
+</svg>

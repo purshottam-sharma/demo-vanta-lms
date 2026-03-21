@@ -47,11 +47,7 @@ export default function App() {
           {/* Protected routes */}
           <Route
             path="/"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
+            element={<Navigate to="/dashboard" replace />}
           />
           <Route
             path="/dashboard"
@@ -61,7 +57,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/users"
             element={

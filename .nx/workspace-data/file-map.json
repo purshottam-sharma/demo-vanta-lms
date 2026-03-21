@@ -1,0 +1,20 @@
+{
+  "version": "6.0",
+  "nxVersion": "20.8.4",
+  "pathMappings": {
+    "@vanta-lms/shared-types": [
+      "libs/shared-types/src/index.ts"
+    ],
+    "@vanta-lms/ui": [
+      "libs/ui/src/index.ts"
+    ],
+    "@vanta-lms/api-client": [
+      "libs/api-client/src/index.ts"
+    ]
+  },
+  "nxJsonPlugins": [],
+  "fileMap": {
+    "projectFileMap": {},
+    "nonProjectFiles": []
+  }
+}
