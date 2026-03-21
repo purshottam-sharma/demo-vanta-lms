@@ -5,13 +5,13 @@ Violating these rules is the **single biggest cause of slow, expensive runs**.
 
 ## Budget Targets
 
-| Agent | Target | Hard Limit |
-|---|---|---|
-| Orchestrator | 20 | 35 |
-| Design Agent | 15 | 25 |
-| Visual Diff Agent (full 2-loop run) | 30 | 50 |
-| Frontend / Backend Agent | 20 | 35 |
-| Retrospect Agent | 10 | 15 |
+| Agent | Target | Hard Limit | Notes |
+|---|---|---|---|
+| Orchestrator | 20 | 35 | |
+| Design Agent | 20 | 30 | +5 for figma_traverse.py — eliminates icon correction loops downstream |
+| Visual Diff Agent (full 2-loop run) | 30 | 50 | Should be 1 loop if Design Agent UISpec was accurate |
+| Frontend / Backend Agent | 20 | 35 | |
+| Retrospect Agent | 10 | 15 | |
 
 ---
 
@@ -150,6 +150,9 @@ The following patterns are automatically detected:
 | `intermediate_image_read` | PNG read mid-session | 1-2 calls |
 | `temp_prompt_file` | echo to /tmp then gemini --prompt-file | 1 per call |
 | `subagent_for_cached_data` | Agent spawned when /tmp data exists | 20-25 calls |
+| `vision_for_icons` | Asking Gemini/Vision to identify icon names from PNG | 1-3 calls + wrong icon in output → 5+ correction loops |
+| `pixel_sampling_for_colors` | PIL getpixel() on Figma PNG for color lookup instead of Figma API | 3-5 calls per color + fragile coordinates |
+| `visual_diff_correcting_design_errors` | Visual Diff applying ≥5 icon fixes that should have been correct in Frontend Agent pass 1 | 10-15 calls × N loops |
 
 ---
 

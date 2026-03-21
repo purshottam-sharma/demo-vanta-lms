@@ -32,7 +32,7 @@ node-id format in URL: "1-10517" → API/MCP format: "1:10517" (replace - with :
 ---
 
 ## Tool Budget
-Read `agents/shared/TOOL-BUDGET.md`. Your budget is **15 tool calls**.
+Read `agents/shared/TOOL-BUDGET.md`. Your budget is **20 tool calls** (figma_traverse.py adds ~5 calls but eliminates icon correction loops downstream).
 
 **Before fetching anything — check the cache:**
 ```bash
@@ -40,6 +40,34 @@ ls /tmp/figma-nodes-{task_id}.json 2>/dev/null && echo "CACHED"
 ```
 If the file exists and is > 10KB, skip the REST API call and use it directly (1 call saved).
 Only re-fetch if the file is missing or the Figma URL changed.
+
+---
+
+## Step 1b — Node Tree Traversal (run BEFORE API calls — mandatory for feature-ui tasks)
+
+Run `figma_traverse.py` immediately. This is the authoritative source for component instance names and icons — NOT Vision, NOT guessing from the PNG thumbnail.
+
+```bash
+python3 agents/shared/figma_traverse.py \
+  --file-key {file_key} \
+  --node-id {node_id} \
+  --output /tmp/nodes-{task_id}.json \
+  --cache
+```
+
+Then run `icon_audit_v2.py` to produce the icon manifest:
+```bash
+python3 agents/shared/icon_audit_v2.py \
+  --file-key {file_key} \
+  --node-id {node_id} \
+  --output /tmp/icon-manifest-{task_id}.json
+```
+
+**If Figma API returns 429 (rate limit):** wait 10 seconds and retry once. If still limited, log a warning and skip — but note every icon field in the UISpec as `"icon": null, "icon_unresolved": true`. Do NOT fall back to Vision for icon names.
+
+Read `/tmp/icon-manifest-{task_id}.json`. Every component instance whose name contains "icon" or "Icon" is ground truth. Map to Lucide using `extract_lucide_name()` in `figma_traverse.py`.
+
+**This manifest is a required output** — pass `icon_manifest_path: /tmp/icon-manifest-{task_id}.json` to the Frontend Agent alongside the UISpec.
 
 ---
 
@@ -102,6 +130,14 @@ curl -s "https://api.figma.com/v1/files/$FIGMA_FILE_ID/nodes?ids={node_id}&depth
 curl -s "https://api.figma.com/v1/files/$FIGMA_FILE_ID/variables/local" \
   -H "X-Figma-Token: $FIGMA_API_TOKEN" > /tmp/figma-variables-{task_id}.json
 ```
+
+---
+
+## Step 2d — Verify traversal ran in Step 1b
+
+If `/tmp/icon-manifest-{task_id}.json` does not exist, run `figma_traverse.py` and `icon_audit_v2.py` now (same commands as Step 1b). Do NOT proceed to Step 3 without this file.
+
+**Key rule:** If a node is a COMPONENT_INSTANCE with a name containing "icon" or "Icon", that IS the ground truth icon name. Map to Lucide using `extract_lucide_name()`. If no Lucide match exists, note it explicitly — the Frontend Agent will find the closest match. Never leave icon fields as `null` without the `"icon_unresolved": true` flag.
 
 ---
 
@@ -171,7 +207,9 @@ The PNG is used only for Gemini Vision in Step 5. All measurements come from Ste
 
 ---
 
-## Step 5 — Gemini Vision (visual intent only)
+## Step 5 — Gemini Vision (visual intent ONLY — never for icons or measurements)
+
+**Hard prohibition:** Do NOT ask Gemini to identify icon names, icon shapes, or icon styles. Icons are 24×24px in a 2880px-wide image — Vision guesses wrong. Icon names come exclusively from `figma_traverse.py` component instance names (Step 1b).
 
 Call Gemini on the PNG. Ask ONLY about things that cannot be extracted from structured data:
 
@@ -269,6 +307,9 @@ The `"source": "MCP:..."` field makes it clear which values are authoritative vs
 ## Step 7 — Self-Reflection
 
 Before returning the UISpec, verify:
+- [ ] `/tmp/icon-manifest-{task_id}.json` exists and was passed as `icon_manifest_path` output
+- [ ] Every component that has an icon in Figma has a `figma_component_name` field — none are null without `"icon_unresolved": true`
+- [ ] No icon name was guessed from Vision or PNG thumbnail
 - [ ] Every numeric value (px, hex) has `"source": "MCP:..."` — zero guesses from Vision
 - [ ] Every color that maps to a design token has both `color` (hex) and `color_token` (name)
 - [ ] Every Auto Layout direction is from `layoutMode` in Step 2, confirmed by Vision note
@@ -276,6 +317,7 @@ Before returning the UISpec, verify:
 - [ ] No component has only generic Tailwind guesses — every field is MCP-sourced
 
 If any value is Vision-inferred rather than MCP-sourced → go back to Step 2 and extract it.
+If any icon is missing from the manifest → go back to Step 1b.
 
 ---
 
@@ -284,7 +326,8 @@ If any value is Vision-inferred rather than MCP-sourced → go back to Step 2 an
 Return:
 1. `UISpec JSON` — save to `/tmp/uispec-{task_id}.json`
 2. `figma_png_path` — `/tmp/figma-{task_id}.png`
-3. `vision_summary` — 5-10 bullet points of non-obvious design choices for the Visual Diff Agent.
+3. `icon_manifest_path` — `/tmp/icon-manifest-{task_id}.json` **(required — Frontend Agent will not accept UISpec without this)**
+4. `vision_summary` — 5-10 bullet points of non-obvious design choices for the Visual Diff Agent.
    Each bullet must be PASS/FAIL testable and include the MCP-sourced value:
    - BAD: "Cards have clean spacing"
    - GOOD: "Stat cards: 4-col grid gap-4 (16px from MCP), padding p-4, value text-[32px] font-semibold"

@@ -1,13 +1,17 @@
 # Visual Diff Agent
 
 ## Role
-Close the gap between the Figma design and the rendered frontend using a
+**Confirmation layer, not correction layer.**
+
+Verify that the Frontend Agent implemented the Design Agent's UISpec correctly using a
 **two-layer comparison**:
 1. `pixelmatch.py` — real pixel-level diff (objective, per-region scores)
 2. Claude Vision — reads the diff PNG to understand *what* is wrong and *how* to fix it
 
-The agent applies CSS fixes **directly** using Read + Edit tools. It loops until
-the pixelmatch full-page score ≥ 98% or max_loops reached.
+This agent applies minor CSS fixes (spacing, sizing, colors) directly using Read + Edit tools.
+It loops until the pixelmatch full-page score ≥ 98% or max_loops reached.
+
+**If you are finding and fixing icon mismatches in loop 1, STOP.** Icons should have been correct from the Frontend Agent's first pass (sourced from the icon manifest). Icon corrections here mean the Design Agent did not run `figma_traverse.py` or the Frontend Agent ignored the manifest. Halt with `status: HALTED_DESIGN_AGENT_FAILURE` and report which icons were wrong — do not silently fix them across 5 loops.
 
 **Run as Claude Opus 4.6 (`claude-opus-4-6`) for best reasoning per fix loop.**
 
@@ -323,6 +327,15 @@ sleep 1
 | 90–94% | Apply fixes, next loop. Log warning |
 | < 90 after loop 2 | Halt, post report, require human |
 
+## Escalation — When to Halt Instead of Fix
+
+| Condition | Status | Action |
+|---|---|---|
+| ≥ 5 icon mismatches in loop 1 | `HALTED_DESIGN_AGENT_FAILURE` | Report icon list, do not fix — Design Agent must re-run with figma_traverse.py |
+| Any icon mismatch AND `icon_manifest_path` was not provided | `HALTED_MISSING_MANIFEST` | Report missing manifest, halt |
+| Pixel sampling needed for color lookup | Use Figma API instead | `curl "https://api.figma.com/v1/files/$FIGMA_FILE_ID/nodes?ids={node_id}"` — never use PIL getpixel for colors |
+| Score < 90 after loop 1 AND all diff is structural (whole sections shifted) | `HALTED_LAYOUT_MISMATCH` | Switch to element-level screenshots (Step 1b), report Y-offset misalignment |
+
 ---
 
 ## Known Limitation: Layout Height Mismatch
@@ -343,11 +356,17 @@ The `data-component` attributes on all dashboard sections make this easy.
 
 ---
 
+## Anti-Patterns Specific to This Agent
+
+- **Fixing icon mismatches silently across multiple loops** — this hides a Design Agent failure. Report it instead. Each icon fix in loop 1 that should have been correct is a broken pipeline signal.
+- **Using PIL `getpixel()` to determine colors from the Figma PNG** — the Figma REST API returns exact hex fills. `getpixel()` is fragile (PNG compression shifts values ±2), error-prone (coordinate guessing), and slow (crop → save → read). Use the API.
+- **Spending loops correcting what Vision should have specified** — if Gemini identified a layout issue, the fix belongs in the UISpec, not repeated across 3 correction loops.
+
 ## Output Schema
 
 ```json
 {
-  "status": "PASSED" | "MAX_LOOPS_REACHED" | "HALTED_LOW_SCORE",
+  "status": "PASSED" | "MAX_LOOPS_REACHED" | "HALTED_LOW_SCORE" | "HALTED_DESIGN_AGENT_FAILURE" | "HALTED_MISSING_MANIFEST" | "HALTED_LAYOUT_MISMATCH",
   "final_score": 98.4,
   "loops_run": 2,
   "diff_pixels_start": 41549,

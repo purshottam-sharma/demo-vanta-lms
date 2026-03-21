@@ -87,8 +87,8 @@ Spawn both sub-agents **simultaneously** using the Agent tool:
 
 **Design Agent** (only if figma_url is present):
 - Provide: task title, figma_url, task_id, acceptance_criteria (UI-relevant only)
-- Instruction: read `agents/design/SKILL.md`, fetch Figma node JSON + download frame PNG, run Claude Vision analysis on PNG, merge JSON measurements + Vision observations into enriched UISpec, self-reflect vs criteria
-- Returns: UISpec JSON + `figma_png_path` + `vision_summary` (3-5 bullet points of non-obvious design choices)
+- Instruction: read `agents/design/SKILL.md`. Run `figma_traverse.py` + `icon_audit_v2.py` FIRST (Step 1b) to build the icon manifest before any API or Vision calls. Then fetch Figma node JSON, download frame PNG, run Gemini Vision for visual intent only (never for icon names). Merge API measurements + Vision observations into enriched UISpec. Self-reflect vs criteria — verify `icon_manifest_path` exists before returning.
+- Returns: UISpec JSON + `figma_png_path` + `icon_manifest_path` (`/tmp/icon-manifest-{task_id}.json`) + `vision_summary` (3-5 bullet points of non-obvious design choices)
 
 **Backend Agent** (only if api_endpoints or DB tables are present):
 - Provide: task description, affected tables/columns, api_endpoints, acceptance_criteria (backend-relevant)
@@ -101,8 +101,8 @@ Save WorkOrder after both complete. `current_step: 2`.
 Read `agents/frontend/SKILL.md`.
 
 Spawn Frontend Agent sub-agent:
-- Provide: UISpec JSON (from Design Agent), `figma_png_path`, `vision_summary`, API contract (endpoints + Pydantic models from Backend Agent), acceptance_criteria
-- Instruction: read `agents/frontend/SKILL.md` and `skills/react-shadcn.md`, generate React pages + components + React Query hooks + TypeScript types using shadcn/ui. Pay close attention to `vision_summary` — these are non-obvious design choices that numbers alone won't convey. Self-reflect vs UISpec + vision_summary + API contract.
+- Provide: UISpec JSON (from Design Agent), `figma_png_path`, `vision_summary`, `icon_manifest_path` (`/tmp/icon-manifest-{task_id}.json`), API contract (endpoints + Pydantic models from Backend Agent), acceptance_criteria
+- Instruction: read `agents/frontend/SKILL.md` and `skills/react-shadcn.md`, generate React pages + components + React Query hooks + TypeScript types using shadcn/ui. **Read `icon_manifest_path` first** — every icon import must come from the manifest's `lucide_name` field. Do not guess icon names from the UISpec, PNG, or vision_summary. If an icon has `"icon_unresolved": true`, find the closest Lucide match and note it. Pay close attention to `vision_summary` for non-obvious layout choices. Self-reflect vs UISpec + icon manifest + API contract.
 - Returns: list of GeneratedFile (agent_source="frontend")
 
 Save WorkOrder. `current_step: 3`.

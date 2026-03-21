@@ -85,6 +85,9 @@ Good:
 | `intermediate_image_read` | `agents/visual-diff/SKILL.md` (Step 1 section) |
 | `temp_prompt_file` | `agents/visual-diff/SKILL.md` (Step 3 section) |
 | `subagent_for_cached_data` | `agents/design/SKILL.md` (Step 2 fallback section) |
+| `vision_for_icons` | `agents/design/SKILL.md` (Step 5 prohibition + Step 1b) |
+| `pixel_sampling_for_colors` | `agents/visual-diff/SKILL.md` (Anti-Patterns section) |
+| `visual_diff_correcting_design_errors` | `agents/design/SKILL.md` (Step 1b) + `agents/visual-diff/SKILL.md` (Escalation section) |
 
 Also patch `agents/shared/TOOL-BUDGET.md` if a NEW anti-pattern is found that isn't in the registry.
 
