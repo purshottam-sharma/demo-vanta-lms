@@ -3,16 +3,15 @@ import {
   Building2,
   ShieldCheck,
   FileDown,
-  Building,
   Presentation,
   GraduationCap,
   BookOpen,
   ArrowRight,
   TrendingUp,
-  Activity,
-  AlertTriangle,
+  ScrollText,
+  Users,
   ArrowUpDown,
-  Brain,
+  Sparkles,
 } from 'lucide-react';
 
 // ─── Quick Actions ─────────────────────────────────────────────────────────────
@@ -54,7 +53,7 @@ function QuickActionsSection() {
 // Expand badge: 32x32 bg-[#f4f0eb] rounded-lg, ArrowRight icon #697586 (from Figma pixel sample)
 function StatCardsRow() {
   const stats = [
-    { label: 'Total Departments', value: '45',     trend: '+ 38%', trendLabel: 'vs last month', icon: Building,     iconBg: '#a38654' },
+    { label: 'Total Departments', value: '45',     trend: '+ 38%', trendLabel: 'vs last month', icon: Building2,    iconBg: '#a38654' },
     { label: 'Teachers',          value: '40',     trend: '+ 56%', trendLabel: 'vs last month', icon: Presentation, iconBg: '#2fc475' },
     { label: 'Students Enrolled', value: '143,445',trend: '88%',   trendLabel: 'vs last month', icon: GraduationCap,iconBg: '#0ba5ec' },
     { label: 'Total Subjects',    value: '32',     trend: '+ 44%', trendLabel: 'vs last month', icon: BookOpen,     iconBg: '#9b8afb' },
@@ -119,7 +118,7 @@ function HealthAndInsightsRow() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#e37a73] flex items-center justify-center flex-shrink-0">
-              <Activity className="h-5 w-5 text-white" />
+              <ScrollText className="h-5 w-5 text-white" />
             </div>
             <span className="text-[16px] font-normal text-[#697586]">School Health Index</span>
           </div>
@@ -166,7 +165,7 @@ function HealthAndInsightsRow() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded bg-[#9b8afb] flex items-center justify-center flex-shrink-0">
-              <Brain className="h-3.5 w-3.5 text-white" />
+              <Sparkles className="h-3.5 w-3.5 text-white" />
             </div>
             <span className="text-[16px] font-normal text-[#697586]">Intelligence Insights (Today)</span>
           </div>
@@ -200,7 +199,7 @@ function StatusCardsRow() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#a38654] flex items-center justify-center flex-shrink-0">
-              <ShieldCheck className="h-5 w-5 text-white" />
+              <Building2 className="h-5 w-5 text-white" />
             </div>
             <span className="text-[14px] text-[#697586]">Compliance Status</span>
           </div>
@@ -224,7 +223,7 @@ function StatusCardsRow() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#f7f5ef] flex items-center justify-center flex-shrink-0">
-              <Activity className="h-5 w-5 text-[#a38654]" />
+              <ScrollText className="h-5 w-5 text-[#a38654]" />
             </div>
             <span className="text-[14px] text-[#697586]">Interventions</span>
           </div>
@@ -255,7 +254,7 @@ function StatusCardsRow() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#f7f5ef] flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="h-5 w-5 text-[#a38654]" />
+              <Users className="h-5 w-5 text-[#a38654]" />
             </div>
             <span className="text-[14px] text-[#697586]">Students at Risk</span>
           </div>
